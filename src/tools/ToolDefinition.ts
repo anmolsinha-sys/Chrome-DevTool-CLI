@@ -4,9 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type {ParsedArguments} from '../bin/chrome-devtools-mcp-cli-options.js';
-import type {McpPage} from '../McpPage.js';
-import {zod} from '../third_party/index.js';
+import type { ParsedArguments } from '../bin/chrome-devtools-mcp-cli-options.js';
+import type { BrowserPage } from '../BrowserPage.js';
+import { zod } from '../third_party/index.js';
 import type {
   Dialog,
   ElementHandle,
@@ -14,16 +14,16 @@ import type {
   ScreenRecorder,
   Viewport,
 } from '../third_party/index.js';
-import type {InsightName, TraceResult} from '../trace-processing/parse.js';
+import type { InsightName, TraceResult } from '../trace-processing/parse.js';
 import type {
   TextSnapshotNode,
   GeolocationOptions,
   ExtensionServiceWorker,
 } from '../types.js';
-import type {InstalledExtension} from '../utils/ExtensionRegistry.js';
-import type {PaginationOptions} from '../utils/types.js';
+import type { InstalledExtension } from '../utils/ExtensionRegistry.js';
+import type { PaginationOptions } from '../utils/types.js';
 
-import type {ToolCategory} from './categories.js';
+import type { ToolCategory } from './categories.js';
 
 export interface BaseToolDefinition<
   Schema extends zod.ZodRawShape = zod.ZodRawShape,
@@ -115,7 +115,7 @@ export interface Response {
   attachImage(value: ImageContentData): void;
   attachNetworkRequest(
     reqid: number,
-    options?: {requestFilePath?: string; responseFilePath?: string},
+    options?: { requestFilePath?: string; responseFilePath?: string },
   ): void;
   attachConsoleMessage(msgid: number): void;
   // Allows re-using DevTools data queried by some tools.
@@ -163,14 +163,14 @@ export type Context = Readonly<{
   saveTemporaryFile(
     data: Uint8Array<ArrayBufferLike>,
     filename: string,
-  ): Promise<{filepath: string}>;
+  ): Promise<{ filepath: string }>;
   saveFile(
     data: Uint8Array<ArrayBufferLike>,
     filename: string,
-  ): Promise<{filename: string}>;
+  ): Promise<{ filename: string }>;
   waitForEventsAfterAction(
     action: () => Promise<unknown>,
-    options?: {timeout?: number},
+    options?: { timeout?: number },
   ): Promise<void>;
   waitForTextOnPage(
     text: string[],
@@ -185,16 +185,16 @@ export type Context = Readonly<{
     page: ContextPage,
     cdpRequestId: string,
   ): number | undefined;
-  getScreenRecorder(): {recorder: ScreenRecorder; filePath: string} | null;
+  getScreenRecorder(): { recorder: ScreenRecorder; filePath: string } | null;
   setScreenRecorder(
-    data: {recorder: ScreenRecorder; filePath: string} | null,
+    data: { recorder: ScreenRecorder; filePath: string } | null,
   ): void;
   installExtension(path: string): Promise<string>;
   uninstallExtension(id: string): Promise<void>;
   triggerExtensionAction(id: string): Promise<void>;
   listExtensions(): InstalledExtension[];
   getExtension(id: string): InstalledExtension | undefined;
-  getSelectedMcpPage(): McpPage;
+  getSelectedBrowserPage(): BrowserPage;
   getExtensionServiceWorkers(): ExtensionServiceWorker[];
   getExtensionServiceWorkerId(
     extensionServiceWorker: ExtensionServiceWorker,
@@ -242,7 +242,7 @@ interface PageToolDefinition<
   Schema extends zod.ZodRawShape = zod.ZodRawShape,
 > extends BaseToolDefinition<Schema> {
   handler: (
-    request: Request<Schema> & {page: ContextPage},
+    request: Request<Schema> & { page: ContextPage },
     response: Response,
     context: Context,
   ) => Promise<void>;
@@ -252,7 +252,7 @@ export type DefinedPageTool<Schema extends zod.ZodRawShape = zod.ZodRawShape> =
   PageToolDefinition<Schema> & {
     pageScoped: true;
     handler: (
-      request: Request<Schema> & {page: ContextPage},
+      request: Request<Schema> & { page: ContextPage },
       response: Response,
       context: Context,
     ) => Promise<void>;
@@ -315,13 +315,13 @@ export const timeoutSchema = {
 
 export function viewportTransform(arg: string | undefined):
   | {
-      width: number;
-      height: number;
-      deviceScaleFactor?: number;
-      isMobile?: boolean;
-      isLandscape?: boolean;
-      hasTouch?: boolean;
-    }
+    width: number;
+    height: number;
+    deviceScaleFactor?: number;
+    isMobile?: boolean;
+    isLandscape?: boolean;
+    hasTouch?: boolean;
+  }
   | undefined {
   if (!arg) {
     return undefined;

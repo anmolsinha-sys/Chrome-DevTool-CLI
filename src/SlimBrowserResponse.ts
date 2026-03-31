@@ -9,13 +9,13 @@ import type {
   ImageContent,
 } from '@modelcontextprotocol/sdk/types.js';
 
-import type {McpContext} from './McpContext.js';
-import {McpResponse} from './McpResponse.js';
+import type { BrowserContext } from './BrowserContext.js';
+import { BrowserResponse } from './BrowserResponse.js';
 
-export class SlimMcpResponse extends McpResponse {
+export class SlimBrowserResponse extends BrowserResponse {
   override async handle(
     _toolName: string,
-    _context: McpContext,
+    _context: BrowserContext,
   ): Promise<{
     content: Array<TextContent | ImageContent>;
     structuredContent: object;

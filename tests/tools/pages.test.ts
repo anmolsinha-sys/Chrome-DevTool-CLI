@@ -6,12 +6,12 @@
 
 import assert from 'node:assert';
 import path from 'node:path';
-import {afterEach, describe, it} from 'node:test';
+import { afterEach, describe, it } from 'node:test';
 
-import type {Dialog} from 'puppeteer-core';
+import type { Dialog } from 'puppeteer-core';
 import sinon from 'sinon';
 
-import type {ParsedArguments} from '../../src/bin/chrome-devtools-mcp-cli-options.js';
+import type { ParsedArguments } from '../../src/bin/chrome-devtools-mcp-cli-options.js';
 import {
   listPages,
   newPage,
@@ -22,7 +22,7 @@ import {
   handleDialog,
   getTabId,
 } from '../../src/tools/pages.js';
-import {html, withMcpContext} from '../utils.js';
+import { html, withBrowserContext } from '../utils.js';
 
 const EXTENSION_SW_PATH = path.join(
   import.meta.dirname,
@@ -44,27 +44,27 @@ describe('pages', () => {
 
   describe('list_pages', () => {
     it('list pages', async () => {
-      await withMcpContext(async (response, context) => {
-        await listPages().handler({params: {}}, response, context);
+      await withBrowserContext(async (response, context) => {
+        await listPages().handler({ params: {} }, response, context);
         assert.ok(response.includePages);
       });
     });
     it('list pages after selected page is closed', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         // Create a second page and select it.
         const page2 = await context.newPage();
-        assert.strictEqual(context.getSelectedMcpPage(), page2);
+        assert.strictEqual(context.getSelectedBrowserPage(), page2);
 
         // Close the selected page via puppeteer (simulating external close).
         await page2.pptrPage.close();
 
         // list_pages should still work even though the selected page is gone.
-        await listPages().handler({params: {}}, response, context);
+        await listPages().handler({ params: {} }, response, context);
         assert.ok(response.includePages);
       });
     });
     it(`list pages for extension pages with --category-extensions`, async t => {
-      await withMcpContext(
+      await withBrowserContext(
         async (response, context) => {
           const extensionId = await context.installExtension(EXTENSION_PATH);
 
@@ -73,14 +73,14 @@ describe('pages', () => {
           await context.triggerExtensionAction(extensionId);
 
           const _popupTarget = await context.browser.waitForTarget(
-            t => t.type() === 'page' && t.url().includes('chrome-extension://'),
+            (t: any) => t.type() === 'page' && t.url().includes('chrome-extension://'),
           );
 
           response.resetResponseLineForTesting();
           const listPageDef = listPages({
             categoryExtensions: true,
           } as ParsedArguments);
-          await listPageDef.handler({params: {}}, response, context);
+          await listPageDef.handler({ params: {} }, response, context);
 
           const result = await response.handle(listPageDef.name, context);
           const textContent = result.content.find(c => c.type === 'text') as {
@@ -106,14 +106,14 @@ describe('pages', () => {
 
     for (const categoryExtensions of [true, false]) {
       it(`list pages for extension service workers ${categoryExtensions ? 'with' : 'without'} --category-extensions`, async t => {
-        await withMcpContext(
+        await withBrowserContext(
           async (response, context) => {
             const extensionId =
               await context.installExtension(EXTENSION_SW_PATH);
             assert.ok(extensionId);
 
             const swTarget = await context.browser.waitForTarget(
-              target =>
+              (target: any) =>
                 target.type() === 'service_worker' &&
                 target.url().includes('chrome-extension://'),
             );
@@ -122,7 +122,7 @@ describe('pages', () => {
             const listPageDef = listPages({
               categoryExtensions,
             } as ParsedArguments);
-            await listPageDef.handler({params: {}}, response, context);
+            await listPageDef.handler({ params: {} }, response, context);
 
             const result = await response.handle(listPageDef.name, context);
             const textContent = result.content.find(c => c.type === 'text') as {
@@ -133,7 +133,7 @@ describe('pages', () => {
 
             if (categoryExtensions) {
               const structured = result.structuredContent as {
-                extensionServiceWorkers: Array<{url: string}>;
+                extensionServiceWorkers: Array<{ url: string }>;
               };
               assert.deepStrictEqual(
                 structured.extensionServiceWorkers.map(sw => sw.url),
@@ -156,7 +156,7 @@ describe('pages', () => {
     }
 
     it('list pages for side panels with --category-extensions', async t => {
-      await withMcpContext(
+      await withBrowserContext(
         async (response, context) => {
           const extensionId = await context.installExtension(
             EXTENSION_SIDE_PANEL_PATH,
@@ -173,13 +173,13 @@ describe('pages', () => {
 
           // Wait for service worker used in the snapshot.
           await context.browser.waitForTarget(
-            target => target.type() === 'service_worker',
+            (target: any) => target.type() === 'service_worker',
           );
 
           const listPageDef = listPages({
             categoryExtensions: true,
           } as ParsedArguments);
-          await listPageDef.handler({params: {}}, response, context);
+          await listPageDef.handler({ params: {} }, response, context);
 
           const result = await response.handle(listPageDef.name, context);
           const textContent = result.content.find(c => c.type === 'text') as {
@@ -205,27 +205,27 @@ describe('pages', () => {
   });
   describe('new_page', () => {
     it('create a page', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         assert.strictEqual(
           context.getPageById(1),
-          context.getSelectedMcpPage(),
+          context.getSelectedBrowserPage(),
         );
         await newPage.handler(
-          {params: {url: 'about:blank'}},
+          { params: { url: 'about:blank' } },
           response,
           context,
         );
         assert.strictEqual(
           context.getPageById(2),
-          context.getSelectedMcpPage(),
+          context.getSelectedBrowserPage(),
         );
         assert.ok(response.includePages);
       });
     });
     it('create a page in the background', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const originalPage = context.getPageById(1);
-        assert.strictEqual(originalPage, context.getSelectedMcpPage());
+        assert.strictEqual(originalPage, context.getSelectedBrowserPage());
         // Ensure original page has focus
         await originalPage.pptrPage.bringToFront();
         assert.strictEqual(
@@ -233,14 +233,14 @@ describe('pages', () => {
           true,
         );
         await newPage.handler(
-          {params: {url: 'about:blank', background: true}},
+          { params: { url: 'about:blank', background: true } },
           response,
           context,
         );
         // New page should be selected but original should retain focus
         assert.strictEqual(
           context.getPageById(2),
-          context.getSelectedMcpPage(),
+          context.getSelectedBrowserPage(),
         );
         assert.strictEqual(
           await originalPage.pptrPage.evaluate(() => document.hasFocus()),
@@ -252,9 +252,9 @@ describe('pages', () => {
   });
   describe('new_page with isolatedContext', () => {
     it('creates a page in an isolated context', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         await newPage.handler(
-          {params: {url: 'about:blank', isolatedContext: 'session-a'}},
+          { params: { url: 'about:blank', isolatedContext: 'session-a' } },
           response,
           context,
         );
@@ -265,15 +265,15 @@ describe('pages', () => {
     });
 
     it('reuses the same context for the same isolatedContext name', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         await newPage.handler(
-          {params: {url: 'about:blank', isolatedContext: 'session-a'}},
+          { params: { url: 'about:blank', isolatedContext: 'session-a' } },
           response,
           context,
         );
         const page1 = context.getSelectedPptrPage();
         await newPage.handler(
-          {params: {url: 'about:blank', isolatedContext: 'session-a'}},
+          { params: { url: 'about:blank', isolatedContext: 'session-a' } },
           response,
           context,
         );
@@ -286,15 +286,15 @@ describe('pages', () => {
     });
 
     it('creates separate contexts for different isolatedContext names', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         await newPage.handler(
-          {params: {url: 'about:blank', isolatedContext: 'session-a'}},
+          { params: { url: 'about:blank', isolatedContext: 'session-a' } },
           response,
           context,
         );
         const pageA = context.getSelectedPptrPage();
         await newPage.handler(
-          {params: {url: 'about:blank', isolatedContext: 'session-b'}},
+          { params: { url: 'about:blank', isolatedContext: 'session-b' } },
           response,
           context,
         );
@@ -306,15 +306,15 @@ describe('pages', () => {
     });
 
     it('includes isolatedContext in page listing', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         await newPage.handler(
-          {params: {url: 'about:blank', isolatedContext: 'session-a'}},
+          { params: { url: 'about:blank', isolatedContext: 'session-a' } },
           response,
           context,
         );
         const result = await response.handle('new_page', context);
         const pages = (
-          result.structuredContent as {pages: Array<{isolatedContext?: string}>}
+          result.structuredContent as { pages: Array<{ isolatedContext?: string }> }
         ).pages;
         const isolatedPage = pages.find(p => p.isolatedContext === 'session-a');
         assert.ok(isolatedPage);
@@ -322,11 +322,11 @@ describe('pages', () => {
     });
 
     it('does not set isolatedContext for pages in the default context', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const page = context.getSelectedPptrPage();
         assert.strictEqual(context.getIsolatedContextName(page), undefined);
         await newPage.handler(
-          {params: {url: 'about:blank'}},
+          { params: { url: 'about:blank' } },
           response,
           context,
         );
@@ -338,23 +338,23 @@ describe('pages', () => {
     });
 
     it('closes an isolated page without errors', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         await newPage.handler(
-          {params: {url: 'about:blank', isolatedContext: 'session-a'}},
+          { params: { url: 'about:blank', isolatedContext: 'session-a' } },
           response,
           context,
         );
         const page = context.getSelectedPptrPage();
         const pageId = context.getPageId(page)!;
         assert.ok(!page.isClosed());
-        await closePage.handler({params: {pageId}}, response, context);
+        await closePage.handler({ params: { pageId } }, response, context);
         assert.ok(page.isClosed());
       });
     });
   });
 
   it('navigate_page targets the pageId page, not the global selection', async () => {
-    await withMcpContext(async (response, context) => {
+    await withBrowserContext(async (response, context) => {
       await newPage.handler(
         {
           params: {
@@ -365,11 +365,11 @@ describe('pages', () => {
         response,
         context,
       );
-      const isolatedPage = context.getSelectedMcpPage();
+      const isolatedPage = context.getSelectedBrowserPage();
 
       // Switch global selection back to the default page.
-      await selectPage.handler({params: {pageId: 1}}, response, context);
-      assert.notStrictEqual(context.getSelectedMcpPage(), isolatedPage);
+      await selectPage.handler({ params: { pageId: 1 } }, response, context);
+      assert.notStrictEqual(context.getSelectedBrowserPage(), isolatedPage);
 
       // Navigate using page; should target the isolated page.
       await navigatePage.handler(
@@ -399,22 +399,22 @@ describe('pages', () => {
 
   describe('close_page', () => {
     it('closes a page', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const page = await context.newPage();
         assert.strictEqual(
           context.getPageById(2),
-          context.getSelectedMcpPage(),
+          context.getSelectedBrowserPage(),
         );
         assert.strictEqual(context.getPageById(2), page);
-        await closePage.handler({params: {pageId: 2}}, response, context);
+        await closePage.handler({ params: { pageId: 2 } }, response, context);
         assert.ok(page.pptrPage.isClosed());
         assert.ok(response.includePages);
       });
     });
     it('cannot close the last page', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const page = context.getSelectedPptrPage();
-        await closePage.handler({params: {pageId: 1}}, response, context);
+        await closePage.handler({ params: { pageId: 1 } }, response, context);
         assert.deepStrictEqual(
           response.responseLines[0],
           `The last open page cannot be closed. It is fine to keep it open.`,
@@ -426,26 +426,26 @@ describe('pages', () => {
   });
   describe('select_page', () => {
     it('selects a page', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         await context.newPage();
         assert.strictEqual(
           context.getPageById(2),
-          context.getSelectedMcpPage(),
+          context.getSelectedBrowserPage(),
         );
-        await selectPage.handler({params: {pageId: 1}}, response, context);
+        await selectPage.handler({ params: { pageId: 1 } }, response, context);
         assert.strictEqual(
           context.getPageById(1),
-          context.getSelectedMcpPage(),
+          context.getSelectedBrowserPage(),
         );
         assert.ok(response.includePages);
       });
     });
     it('selects a page and keeps it focused in the background', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         await context.newPage();
         assert.strictEqual(
           context.getPageById(2),
-          context.getSelectedMcpPage(),
+          context.getSelectedBrowserPage(),
         );
         assert.strictEqual(
           await context
@@ -453,10 +453,10 @@ describe('pages', () => {
             .pptrPage.evaluate(() => document.hasFocus()),
           true,
         );
-        await selectPage.handler({params: {pageId: 1}}, response, context);
+        await selectPage.handler({ params: { pageId: 1 } }, response, context);
         assert.strictEqual(
           context.getPageById(1),
-          context.getSelectedMcpPage(),
+          context.getSelectedBrowserPage(),
         );
         assert.strictEqual(
           await context
@@ -468,10 +468,10 @@ describe('pages', () => {
       });
     });
     it('preserves focus across different browser contexts', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         // Create pages in separate isolated contexts.
         await newPage.handler(
-          {params: {url: 'about:blank', isolatedContext: 'ctx-a'}},
+          { params: { url: 'about:blank', isolatedContext: 'ctx-a' } },
           response,
           context,
         );
@@ -479,7 +479,7 @@ describe('pages', () => {
         const pageAId = context.getPageId(pageA)!;
 
         await newPage.handler(
-          {params: {url: 'about:blank', isolatedContext: 'ctx-b'}},
+          { params: { url: 'about:blank', isolatedContext: 'ctx-b' } },
           response,
           context,
         );
@@ -497,7 +497,7 @@ describe('pages', () => {
 
         // Switching back to pageA should preserve pageB's focus.
         await selectPage.handler(
-          {params: {pageId: pageAId}},
+          { params: { pageId: pageAId } },
           response,
           context,
         );
@@ -514,11 +514,11 @@ describe('pages', () => {
   });
   describe('navigate_page', () => {
     it('navigates to correct page', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         await navigatePage.handler(
           {
-            params: {url: 'data:text/html,<div>Hello MCP</div>'},
-            page: context.getSelectedMcpPage(),
+            params: { url: 'data:text/html,<div>Hello MCP</div>' },
+            page: context.getSelectedBrowserPage(),
           },
           response,
           context,
@@ -533,11 +533,11 @@ describe('pages', () => {
     });
 
     it('throws an error if the page was closed not by the MCP server', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const page = await context.newPage();
         assert.strictEqual(
           context.getPageById(2),
-          context.getSelectedMcpPage(),
+          context.getSelectedBrowserPage(),
         );
         assert.strictEqual(context.getPageById(2), page);
 
@@ -546,8 +546,8 @@ describe('pages', () => {
         try {
           await navigatePage.handler(
             {
-              params: {url: 'data:text/html,<div>Hello MCP</div>'},
-              page: context.getSelectedMcpPage(),
+              params: { url: 'data:text/html,<div>Hello MCP</div>' },
+              page: context.getSelectedBrowserPage(),
             },
             response,
             context,
@@ -563,7 +563,7 @@ describe('pages', () => {
     });
 
     it('respects the timeout parameter', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const page = context.getSelectedPptrPage();
         const stub = sinon.stub(page, 'waitForNavigation').resolves(null);
 
@@ -574,7 +574,7 @@ describe('pages', () => {
                 url: 'about:blank',
                 timeout: 12345,
               },
-              page: context.getSelectedMcpPage(),
+              page: context.getSelectedBrowserPage(),
             },
             response,
             context,
@@ -591,11 +591,11 @@ describe('pages', () => {
       });
     });
     it('go back', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const page = context.getSelectedPptrPage();
         await page.goto('data:text/html,<div>Hello MCP</div>');
         await navigatePage.handler(
-          {params: {type: 'back'}, page: context.getSelectedMcpPage()},
+          { params: { type: 'back' }, page: context.getSelectedBrowserPage() },
           response,
           context,
         );
@@ -608,12 +608,12 @@ describe('pages', () => {
       });
     });
     it('go forward', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const page = context.getSelectedPptrPage();
         await page.goto('data:text/html,<div>Hello MCP</div>');
         await page.goBack();
         await navigatePage.handler(
-          {params: {type: 'forward'}, page: context.getSelectedMcpPage()},
+          { params: { type: 'forward' }, page: context.getSelectedBrowserPage() },
           response,
           context,
         );
@@ -626,11 +626,11 @@ describe('pages', () => {
       });
     });
     it('reload', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const page = context.getSelectedPptrPage();
         await page.goto('data:text/html,<div>Hello MCP</div>');
         await navigatePage.handler(
-          {params: {type: 'reload'}, page: context.getSelectedMcpPage()},
+          { params: { type: 'reload' }, page: context.getSelectedBrowserPage() },
           response,
           context,
         );
@@ -644,7 +644,7 @@ describe('pages', () => {
     });
 
     it('reload with accpeting the beforeunload dialog', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const page = context.getSelectedPptrPage();
         await page.setContent(
           html` <script>
@@ -656,12 +656,12 @@ describe('pages', () => {
         );
 
         await navigatePage.handler(
-          {params: {type: 'reload'}, page: context.getSelectedMcpPage()},
+          { params: { type: 'reload' }, page: context.getSelectedBrowserPage() },
           response,
           context,
         );
 
-        assert.strictEqual(context.getSelectedMcpPage().getDialog(), undefined);
+        assert.strictEqual(context.getSelectedBrowserPage().getDialog(), undefined);
         assert.ok(response.includePages);
         assert.strictEqual(
           response.responseLines.join('\n'),
@@ -671,7 +671,7 @@ describe('pages', () => {
     });
 
     it('reload with declining the beforeunload dialog', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const page = context.getSelectedPptrPage();
         await page.setContent(
           html` <script>
@@ -689,13 +689,13 @@ describe('pages', () => {
               handleBeforeUnload: 'decline',
               timeout: 500,
             },
-            page: context.getSelectedMcpPage(),
+            page: context.getSelectedBrowserPage(),
           },
           response,
           context,
         );
 
-        assert.strictEqual(context.getSelectedMcpPage().getDialog(), undefined);
+        assert.strictEqual(context.getSelectedBrowserPage().getDialog(), undefined);
         assert.ok(response.includePages);
         assert.strictEqual(
           response.responseLines.join('\n'),
@@ -705,9 +705,9 @@ describe('pages', () => {
     });
 
     it('go forward with error', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         await navigatePage.handler(
-          {params: {type: 'forward'}, page: context.getSelectedMcpPage()},
+          { params: { type: 'forward' }, page: context.getSelectedBrowserPage() },
           response,
           context,
         );
@@ -721,9 +721,9 @@ describe('pages', () => {
       });
     });
     it('go back with error', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         await navigatePage.handler(
-          {params: {type: 'back'}, page: context.getSelectedMcpPage()},
+          { params: { type: 'back' }, page: context.getSelectedBrowserPage() },
           response,
           context,
         );
@@ -737,14 +737,14 @@ describe('pages', () => {
       });
     });
     it('navigates to correct page with initScript', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         await navigatePage.handler(
           {
             params: {
               url: 'data:text/html,<div>Hello MCP</div>',
               initScript: 'window.initScript = "completed"',
             },
-            page: context.getSelectedMcpPage(),
+            page: context.getSelectedBrowserPage(),
           },
           response,
           context,
@@ -762,17 +762,17 @@ describe('pages', () => {
   });
   describe('resize', () => {
     it('resize the page', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const page = context.getSelectedPptrPage();
         const resizePromise = page.evaluate(() => {
           return new Promise(resolve => {
-            window.addEventListener('resize', resolve, {once: true});
+            window.addEventListener('resize', resolve, { once: true });
           });
         });
         await resizePage.handler(
           {
-            params: {width: 700, height: 500},
-            page: context.getSelectedMcpPage(),
+            params: { width: 700, height: 500 },
+            page: context.getSelectedBrowserPage(),
           },
           response,
           context,
@@ -789,24 +789,24 @@ describe('pages', () => {
     });
 
     it('resize when window state is normal', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const page = context.getSelectedPptrPage();
         const browser = page.browser();
         const windowId = await page.windowId();
-        await browser.setWindowBounds(windowId, {windowState: 'normal'});
+        await browser.setWindowBounds(windowId, { windowState: 'normal' });
 
-        const {windowState} = await browser.getWindowBounds(windowId);
+        const { windowState } = await browser.getWindowBounds(windowId);
         assert.strictEqual(windowState, 'normal');
 
         const resizePromise = page.evaluate(() => {
           return new Promise(resolve => {
-            window.addEventListener('resize', resolve, {once: true});
+            window.addEventListener('resize', resolve, { once: true });
           });
         });
         await resizePage.handler(
           {
-            params: {width: 650, height: 450},
-            page: context.getSelectedMcpPage(),
+            params: { width: 650, height: 450 },
+            page: context.getSelectedBrowserPage(),
           },
           response,
           context,
@@ -823,24 +823,24 @@ describe('pages', () => {
     });
 
     it('resize when window state is minimized', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const page = context.getSelectedPptrPage();
         const browser = page.browser();
         const windowId = await page.windowId();
-        await browser.setWindowBounds(windowId, {windowState: 'minimized'});
+        await browser.setWindowBounds(windowId, { windowState: 'minimized' });
 
-        const {windowState} = await browser.getWindowBounds(windowId);
+        const { windowState } = await browser.getWindowBounds(windowId);
         assert.strictEqual(windowState, 'minimized');
 
         const resizePromise = page.evaluate(() => {
           return new Promise(resolve => {
-            window.addEventListener('resize', resolve, {once: true});
+            window.addEventListener('resize', resolve, { once: true });
           });
         });
         await resizePage.handler(
           {
-            params: {width: 750, height: 550},
-            page: context.getSelectedMcpPage(),
+            params: { width: 750, height: 550 },
+            page: context.getSelectedBrowserPage(),
           },
           response,
           context,
@@ -857,24 +857,24 @@ describe('pages', () => {
     });
 
     it('resize when window state is maximized', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const page = context.getSelectedPptrPage();
         const browser = page.browser();
         const windowId = await page.windowId();
-        await browser.setWindowBounds(windowId, {windowState: 'maximized'});
+        await browser.setWindowBounds(windowId, { windowState: 'maximized' });
 
-        const {windowState} = await browser.getWindowBounds(windowId);
+        const { windowState } = await browser.getWindowBounds(windowId);
         assert.strictEqual(windowState, 'maximized');
 
         const resizePromise = page.evaluate(() => {
           return new Promise(resolve => {
-            window.addEventListener('resize', resolve, {once: true});
+            window.addEventListener('resize', resolve, { once: true });
           });
         });
         await resizePage.handler(
           {
-            params: {width: 725, height: 525},
-            page: context.getSelectedMcpPage(),
+            params: { width: 725, height: 525 },
+            page: context.getSelectedBrowserPage(),
           },
           response,
           context,
@@ -891,24 +891,24 @@ describe('pages', () => {
     });
 
     it('resize when window state is fullscreen', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const page = context.getSelectedPptrPage();
         const browser = page.browser();
         const windowId = await page.windowId();
-        await browser.setWindowBounds(windowId, {windowState: 'fullscreen'});
+        await browser.setWindowBounds(windowId, { windowState: 'fullscreen' });
 
-        const {windowState} = await browser.getWindowBounds(windowId);
+        const { windowState } = await browser.getWindowBounds(windowId);
         assert.strictEqual(windowState, 'fullscreen');
 
         const resizePromise = page.evaluate(() => {
           return new Promise(resolve => {
-            window.addEventListener('resize', resolve, {once: true});
+            window.addEventListener('resize', resolve, { once: true });
           });
         });
         await resizePage.handler(
           {
-            params: {width: 850, height: 650},
-            page: context.getSelectedMcpPage(),
+            params: { width: 850, height: 650 },
+            page: context.getSelectedBrowserPage(),
           },
           response,
           context,
@@ -927,7 +927,7 @@ describe('pages', () => {
 
   describe('dialogs', () => {
     it('can accept dialogs', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const page = context.getSelectedPptrPage();
         const dialogPromise = new Promise<void>(resolve => {
           page.on('dialog', () => {
@@ -943,12 +943,12 @@ describe('pages', () => {
             params: {
               action: 'accept',
             },
-            page: context.getSelectedMcpPage(),
+            page: context.getSelectedBrowserPage(),
           },
           response,
           context,
         );
-        assert.strictEqual(context.getSelectedMcpPage().getDialog(), undefined);
+        assert.strictEqual(context.getSelectedBrowserPage().getDialog(), undefined);
         assert.strictEqual(
           response.responseLines[0],
           'Successfully accepted the dialog',
@@ -956,7 +956,7 @@ describe('pages', () => {
       });
     });
     it('can dismiss dialogs', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const page = context.getSelectedPptrPage();
         const dialogPromise = new Promise<void>(resolve => {
           page.on('dialog', () => {
@@ -972,12 +972,12 @@ describe('pages', () => {
             params: {
               action: 'dismiss',
             },
-            page: context.getSelectedMcpPage(),
+            page: context.getSelectedBrowserPage(),
           },
           response,
           context,
         );
-        assert.strictEqual(context.getSelectedMcpPage().getDialog(), undefined);
+        assert.strictEqual(context.getSelectedBrowserPage().getDialog(), undefined);
         assert.strictEqual(
           response.responseLines[0],
           'Successfully dismissed the dialog',
@@ -985,10 +985,10 @@ describe('pages', () => {
       });
     });
     it('can dismiss already dismissed dialog dialogs', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const page = context.getSelectedPptrPage();
         const dialogPromise = new Promise<Dialog>(resolve => {
-          page.on('dialog', dialog => {
+          page.on('dialog', (dialog: any) => {
             resolve(dialog);
           });
         });
@@ -1002,12 +1002,12 @@ describe('pages', () => {
             params: {
               action: 'dismiss',
             },
-            page: context.getSelectedMcpPage(),
+            page: context.getSelectedBrowserPage(),
           },
           response,
           context,
         );
-        assert.strictEqual(context.getSelectedMcpPage().getDialog(), undefined);
+        assert.strictEqual(context.getSelectedBrowserPage().getDialog(), undefined);
         assert.strictEqual(
           response.responseLines[0],
           'Successfully dismissed the dialog',
@@ -1015,8 +1015,8 @@ describe('pages', () => {
       });
     });
     it('can handle a dialog on a non-selected page via pageId', async () => {
-      await withMcpContext(async (response, context) => {
-        const page1 = context.getSelectedMcpPage();
+      await withBrowserContext(async (response, context) => {
+        const page1 = context.getSelectedBrowserPage();
         await context.newPage(); // page2 is now selected
 
         const dialogPromise = new Promise<void>(resolve => {
@@ -1048,10 +1048,10 @@ describe('pages', () => {
       });
     });
     it('tracks dialogs independently per page', async () => {
-      await withMcpContext(async (response, context) => {
-        const page1 = context.getSelectedMcpPage();
+      await withBrowserContext(async (response, context) => {
+        const page1 = context.getSelectedBrowserPage();
         await context.newPage();
-        const page2 = context.getSelectedMcpPage();
+        const page2 = context.getSelectedBrowserPage();
 
         // Trigger dialog on page1.
         const dialog1Promise = new Promise<void>(resolve => {
@@ -1081,7 +1081,7 @@ describe('pages', () => {
 
         // Handle page1's dialog; page2's should remain.
         await handleDialog.handler(
-          {params: {action: 'accept'}, page: page1},
+          { params: { action: 'accept' }, page: page1 },
           response,
           context,
         );
@@ -1090,7 +1090,7 @@ describe('pages', () => {
 
         // Handle page2's dialog.
         await handleDialog.handler(
-          {params: {action: 'dismiss'}, page: page2},
+          { params: { action: 'dismiss' }, page: page2 },
           response,
           context,
         );
@@ -1101,14 +1101,14 @@ describe('pages', () => {
 
   describe('get_tab_id', () => {
     it('returns the tab id', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const page = context.getSelectedPptrPage();
         // @ts-expect-error _tabId is internal.
         assert.ok(typeof page._tabId === 'string');
         // @ts-expect-error _tabId is internal.
         page._tabId = 'test-tab-id';
         await getTabId.handler(
-          {params: {pageId: 1}, page: context.getSelectedMcpPage()},
+          { params: { pageId: 1 }, page: context.getSelectedBrowserPage() },
           response,
           context,
         );

@@ -13,16 +13,16 @@ import {NetworkFormatter} from '../src/formatters/NetworkFormatter.js';
 import type {HTTPResponse} from '../src/third_party/index.js';
 import type {TraceResult} from '../src/trace-processing/parse.js';
 
-import {getMockRequest, html, withMcpContext} from './utils.js';
+import {getMockRequest, html, withBrowserContext} from './utils.js';
 
-describe('McpContext', () => {
+describe('BrowserContext', () => {
   afterEach(() => {
     sinon.restore();
   });
 
   it('list pages', async () => {
-    await withMcpContext(async (_response, context) => {
-      const page = context.getSelectedMcpPage();
+    await withBrowserContext(async (_response, context) => {
+      const page = context.getSelectedBrowserPage();
       await page.pptrPage.setContent(
         html`<button>Click me</button>
           <input
@@ -30,15 +30,15 @@ describe('McpContext', () => {
             value="Input"
           />`,
       );
-      await context.createTextSnapshot(context.getSelectedMcpPage());
+      await context.createTextSnapshot(context.getSelectedBrowserPage());
       assert.ok(await page.getElementByUid('1_1'));
-      await context.createTextSnapshot(context.getSelectedMcpPage());
+      await context.createTextSnapshot(context.getSelectedBrowserPage());
       await page.getElementByUid('1_1');
     });
   });
 
   it('can store and retrieve the latest performance trace', async () => {
-    await withMcpContext(async (_response, context) => {
+    await withBrowserContext(async (_response, context) => {
       const fakeTrace1 = {} as unknown as TraceResult;
       const fakeTrace2 = {} as unknown as TraceResult;
       context.storeTraceRecording(fakeTrace1);
@@ -48,7 +48,7 @@ describe('McpContext', () => {
   });
 
   it('should update default timeout when cpu throttling changes', async () => {
-    await withMcpContext(async (_response, context) => {
+    await withBrowserContext(async (_response, context) => {
       const page = await context.newPage();
       const timeoutBefore = page.pptrPage.getDefaultTimeout();
       await context.emulate({cpuThrottlingRate: 2});
@@ -58,7 +58,7 @@ describe('McpContext', () => {
   });
 
   it('should update default timeout when network conditions changes', async () => {
-    await withMcpContext(async (_response, context) => {
+    await withBrowserContext(async (_response, context) => {
       const page = await context.newPage();
       const timeoutBefore = page.pptrPage.getDefaultNavigationTimeout();
       await context.emulate({networkConditions: 'Slow 3G'});
@@ -68,7 +68,7 @@ describe('McpContext', () => {
   });
 
   it('should call waitForEventsAfterAction with correct multipliers', async () => {
-    await withMcpContext(async (_response, context) => {
+    await withBrowserContext(async (_response, context) => {
       const page = await context.newPage();
 
       await context.emulate({
@@ -86,7 +86,7 @@ describe('McpContext', () => {
   });
 
   it('should should detect open DevTools pages', async () => {
-    await withMcpContext(
+    await withBrowserContext(
       async (_response, context) => {
         const page = await context.newPage();
         // TODO: we do not know when the CLI flag to auto open DevTools will run
@@ -102,9 +102,9 @@ describe('McpContext', () => {
     );
   });
   it('resolves uid from a non-selected page snapshot', async () => {
-    await withMcpContext(async (_response, context) => {
+    await withBrowserContext(async (_response, context) => {
       // Page 1: set content and snapshot
-      const page1 = context.getSelectedMcpPage();
+      const page1 = context.getSelectedBrowserPage();
       await page1.pptrPage.setContent(html`<button>Page1 Button</button>`);
       await context.createTextSnapshot(page1, false, undefined);
 
@@ -131,7 +131,7 @@ describe('McpContext', () => {
   });
 
   it('should include network requests in structured content', async t => {
-    await withMcpContext(async (response, context) => {
+    await withBrowserContext(async (response, context) => {
       const mockRequest = getMockRequest({
         url: 'http://example.com/api',
         stableId: 123,
@@ -148,7 +148,7 @@ describe('McpContext', () => {
   });
 
   it('should include detailed network request in structured content', async t => {
-    await withMcpContext(async (response, context) => {
+    await withBrowserContext(async (response, context) => {
       const mockRequest = getMockRequest({
         url: 'http://example.com/detail',
         stableId: 456,
@@ -165,7 +165,7 @@ describe('McpContext', () => {
   });
 
   it('should include file paths in structured content when saving to file', async t => {
-    await withMcpContext(async (response, context) => {
+    await withBrowserContext(async (response, context) => {
       const mockRequest = getMockRequest({
         url: 'http://example.com/file-save',
         stableId: 789,

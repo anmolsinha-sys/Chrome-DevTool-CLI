@@ -10,7 +10,7 @@ import {describe, it, afterEach} from 'node:test';
 import sinon from 'sinon';
 
 import {startScreencast, stopScreencast} from '../../src/tools/screencast.js';
-import {withMcpContext} from '../utils.js';
+import {withBrowserContext} from '../utils.js';
 
 function createMockRecorder() {
   return {
@@ -25,7 +25,7 @@ describe('screencast', () => {
 
   describe('screencast_start', () => {
     it('starts a screencast recording with filePath', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const mockRecorder = createMockRecorder();
         const selectedPage = context.getSelectedPptrPage();
         const screencastStub = sinon
@@ -35,7 +35,7 @@ describe('screencast', () => {
         await startScreencast.handler(
           {
             params: {path: '/tmp/test-recording.mp4'},
-            page: context.getSelectedMcpPage(),
+            page: context.getSelectedBrowserPage(),
           },
           response,
           context,
@@ -56,7 +56,7 @@ describe('screencast', () => {
     });
 
     it('starts a screencast recording with temp file when no filePath', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const mockRecorder = createMockRecorder();
         const selectedPage = context.getSelectedPptrPage();
         const screencastStub = sinon
@@ -64,7 +64,7 @@ describe('screencast', () => {
           .resolves(mockRecorder as never);
 
         await startScreencast.handler(
-          {params: {}, page: context.getSelectedMcpPage()},
+          {params: {}, page: context.getSelectedBrowserPage()},
           response,
           context,
         );
@@ -78,7 +78,7 @@ describe('screencast', () => {
     });
 
     it('errors if a recording is already active', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const mockRecorder = createMockRecorder();
         context.setScreenRecorder({
           recorder: mockRecorder as never,
@@ -89,7 +89,7 @@ describe('screencast', () => {
         const screencastStub = sinon.stub(selectedPage, 'screencast');
 
         await startScreencast.handler(
-          {params: {}, page: context.getSelectedMcpPage()},
+          {params: {}, page: context.getSelectedBrowserPage()},
           response,
           context,
         );
@@ -104,7 +104,7 @@ describe('screencast', () => {
     });
 
     it('provides a clear error when ffmpeg is not found', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const selectedPage = context.getSelectedPptrPage();
         const error = new Error('spawn ffmpeg ENOENT');
         sinon.stub(selectedPage, 'screencast').rejects(error);
@@ -113,7 +113,7 @@ describe('screencast', () => {
           startScreencast.handler(
             {
               params: {path: '/tmp/test.mp4'},
-              page: context.getSelectedMcpPage(),
+              page: context.getSelectedBrowserPage(),
             },
             response,
             context,
@@ -128,10 +128,10 @@ describe('screencast', () => {
 
   describe('screencast_stop', () => {
     it('does nothing if no recording is active', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         assert.strictEqual(context.getScreenRecorder(), null);
         await stopScreencast.handler(
-          {params: {}, page: context.getSelectedMcpPage()},
+          {params: {}, page: context.getSelectedBrowserPage()},
           response,
           context,
         );
@@ -140,7 +140,7 @@ describe('screencast', () => {
     });
 
     it('stops an active recording and reports the file path', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const mockRecorder = createMockRecorder();
         const filePath = '/tmp/test-recording.mp4';
         context.setScreenRecorder({
@@ -149,7 +149,7 @@ describe('screencast', () => {
         });
 
         await stopScreencast.handler(
-          {params: {}, page: context.getSelectedMcpPage()},
+          {params: {}, page: context.getSelectedBrowserPage()},
           response,
           context,
         );
@@ -165,7 +165,7 @@ describe('screencast', () => {
     });
 
     it('clears the recorder even if stop() throws', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const mockRecorder = createMockRecorder();
         mockRecorder.stop.rejects(new Error('ffmpeg process error'));
         context.setScreenRecorder({
@@ -175,7 +175,7 @@ describe('screencast', () => {
 
         await assert.rejects(
           stopScreencast.handler(
-            {params: {}, page: context.getSelectedMcpPage()},
+            {params: {}, page: context.getSelectedBrowserPage()},
             response,
             context,
           ),

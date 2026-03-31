@@ -12,16 +12,16 @@ import {join} from 'node:path';
 import {describe, it} from 'node:test';
 
 import {takeMemorySnapshot} from '../../src/tools/memory.js';
-import {withMcpContext} from '../utils.js';
+import {withBrowserContext} from '../utils.js';
 
 describe('memory', () => {
   describe('take_memory_snapshot', () => {
     it('with default options', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const filePath = join(tmpdir(), 'test-screenshot.heapsnapshot');
         try {
           await takeMemorySnapshot.handler(
-            {params: {filePath}, page: context.getSelectedMcpPage()},
+            {params: {filePath}, page: context.getSelectedBrowserPage()},
             response,
             context,
           );

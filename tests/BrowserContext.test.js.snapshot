@@ -1,4 +1,4 @@
-exports[`McpContext > should include detailed network request in structured content 1`] = `
+exports[`BrowserContext > should include detailed network request in structured content 1`] = `
 {
   "networkRequest": {
     "requestId": 456,
@@ -12,7 +12,7 @@ exports[`McpContext > should include detailed network request in structured cont
 }
 `;
 
-exports[`McpContext > should include file paths in structured content when saving to file 1`] = `
+exports[`BrowserContext > should include file paths in structured content when saving to file 1`] = `
 {
   "networkRequest": {
     "requestBody": "/tmp/req.txt",
@@ -21,7 +21,7 @@ exports[`McpContext > should include file paths in structured content when savin
 }
 `;
 
-exports[`McpContext > should include network requests in structured content 1`] = `
+exports[`BrowserContext > should include network requests in structured content 1`] = `
 {
   "pagination": {
     "currentPage": 0,

@@ -6,27 +6,27 @@
 
 import type fs from 'node:fs';
 
-import type {parseArguments} from './bin/chrome-devtools-mcp-cli-options.js';
-import type {Channel} from './browser.js';
-import {ensureBrowserConnected, ensureBrowserLaunched} from './browser.js';
-import {loadIssueDescriptions} from './issue-descriptions.js';
-import {logger} from './logger.js';
-import {McpContext} from './McpContext.js';
-import {McpResponse} from './McpResponse.js';
-import {Mutex} from './Mutex.js';
-import {SlimMcpResponse} from './SlimMcpResponse.js';
-import {ClearcutLogger} from './telemetry/ClearcutLogger.js';
-import {bucketizeLatency} from './telemetry/metricUtils.js';
+import type { parseArguments } from './bin/chrome-devtools-mcp-cli-options.js';
+import type { Channel } from './browser.js';
+import { ensureBrowserConnected, ensureBrowserLaunched } from './browser.js';
+import { loadIssueDescriptions } from './issue-descriptions.js';
+import { logger } from './logger.js';
+import { BrowserContext } from './BrowserContext.js';
+import { BrowserResponse } from './BrowserResponse.js';
+import { Mutex } from './Mutex.js';
+import { SlimBrowserResponse } from './SlimBrowserResponse.js';
+import { ClearcutLogger } from './telemetry/ClearcutLogger.js';
+import { bucketizeLatency } from './telemetry/metricUtils.js';
 import {
   McpServer,
   type CallToolResult,
   SetLevelRequestSchema,
 } from './third_party/index.js';
-import {ToolCategory} from './tools/categories.js';
-import type {DefinedPageTool, ToolDefinition} from './tools/ToolDefinition.js';
-import {pageIdSchema} from './tools/ToolDefinition.js';
-import {createTools} from './tools/tools.js';
-import {VERSION} from './version.js';
+import { ToolCategory } from './tools/categories.js';
+import type { DefinedPageTool, ToolDefinition } from './tools/ToolDefinition.js';
+import { pageIdSchema } from './tools/ToolDefinition.js';
+import { createTools } from './tools/tools.js';
+import { VERSION } from './version.js';
 
 export async function createMcpServer(
   serverArgs: ReturnType<typeof parseArguments>,
@@ -51,7 +51,7 @@ export async function createMcpServer(
       title: 'Chrome DevTools MCP server',
       version: VERSION,
     },
-    {capabilities: {logging: {}}},
+    { capabilities: { logging: {} } },
   );
   server.server.setRequestHandler(SetLevelRequestSchema, () => {
     return {};
@@ -64,8 +64,8 @@ export async function createMcpServer(
     }
   };
 
-  let context: McpContext;
-  async function getContext(): Promise<McpContext> {
+  let context: BrowserContext;
+  async function getContext(): Promise<BrowserContext> {
     const chromeArgs: string[] = (serverArgs.chromeArg ?? []).map(String);
     const ignoreDefaultChromeArgs: string[] = (
       serverArgs.ignoreDefaultChromeArg ?? []
@@ -77,34 +77,34 @@ export async function createMcpServer(
     const browser =
       serverArgs.browserUrl || serverArgs.wsEndpoint || serverArgs.autoConnect
         ? await ensureBrowserConnected({
-            browserURL: serverArgs.browserUrl,
-            wsEndpoint: serverArgs.wsEndpoint,
-            wsHeaders: serverArgs.wsHeaders,
-            // Important: only pass channel, if autoConnect is true.
-            channel: serverArgs.autoConnect
-              ? (serverArgs.channel as Channel)
-              : undefined,
-            userDataDir: serverArgs.userDataDir,
-            devtools,
-          })
+          browserURL: serverArgs.browserUrl,
+          wsEndpoint: serverArgs.wsEndpoint,
+          wsHeaders: serverArgs.wsHeaders,
+          // Important: only pass channel, if autoConnect is true.
+          channel: serverArgs.autoConnect
+            ? (serverArgs.channel as Channel)
+            : undefined,
+          userDataDir: serverArgs.userDataDir,
+          devtools,
+        })
         : await ensureBrowserLaunched({
-            headless: serverArgs.headless,
-            executablePath: serverArgs.executablePath,
-            channel: serverArgs.channel as Channel,
-            isolated: serverArgs.isolated ?? false,
-            userDataDir: serverArgs.userDataDir,
-            logFile: options.logFile,
-            viewport: serverArgs.viewport,
-            chromeArgs,
-            ignoreDefaultChromeArgs,
-            acceptInsecureCerts: serverArgs.acceptInsecureCerts,
-            devtools,
-            enableExtensions: serverArgs.categoryExtensions,
-            viaCli: serverArgs.viaCli,
-          });
+          headless: serverArgs.headless,
+          executablePath: serverArgs.executablePath,
+          channel: serverArgs.channel as Channel,
+          isolated: serverArgs.isolated ?? false,
+          userDataDir: serverArgs.userDataDir,
+          logFile: options.logFile,
+          viewport: serverArgs.viewport,
+          chromeArgs,
+          ignoreDefaultChromeArgs,
+          acceptInsecureCerts: serverArgs.acceptInsecureCerts,
+          devtools,
+          enableExtensions: serverArgs.categoryExtensions,
+          viaCli: serverArgs.viaCli,
+        });
 
     if (context?.browser !== browser) {
-      context = await McpContext.from(browser, logger, {
+      context = await BrowserContext.from(browser, logger, {
         experimentalDevToolsDebugging: devtools,
         experimentalIncludeAllPages: serverArgs.experimentalIncludeAllPages,
         performanceCrux: serverArgs.performanceCrux,
@@ -166,10 +166,10 @@ export async function createMcpServer(
     }
     const schema =
       'pageScoped' in tool &&
-      tool.pageScoped &&
-      serverArgs.experimentalPageIdRouting &&
-      !serverArgs.slim
-        ? {...tool.schema, ...pageIdSchema}
+        tool.pageScoped &&
+        serverArgs.experimentalPageIdRouting &&
+        !serverArgs.slim
+        ? { ...tool.schema, ...pageIdSchema }
         : tool.schema;
 
     server.registerTool(
@@ -189,15 +189,15 @@ export async function createMcpServer(
           logger(`${tool.name} context: resolved`);
           await context.detectOpenDevToolsWindows();
           const response = serverArgs.slim
-            ? new SlimMcpResponse(serverArgs)
-            : new McpResponse(serverArgs);
+            ? new SlimBrowserResponse(serverArgs)
+            : new BrowserResponse(serverArgs);
           if ('pageScoped' in tool && tool.pageScoped) {
             const page =
               serverArgs.experimentalPageIdRouting &&
-              params.pageId &&
-              !serverArgs.slim
+                params.pageId &&
+                !serverArgs.slim
                 ? context.getPageById(params.pageId)
-                : context.getSelectedMcpPage();
+                : context.getSelectedBrowserPage();
             response.setPage(page);
             await tool.handler(
               {
@@ -217,7 +217,7 @@ export async function createMcpServer(
               context,
             );
           }
-          const {content, structuredContent} = await response.handle(
+          const { content, structuredContent } = await response.handle(
             tool.name,
             context,
           );
@@ -268,7 +268,7 @@ export async function createMcpServer(
 
   await loadIssueDescriptions();
 
-  return {server, clearcutLogger};
+  return { server, clearcutLogger };
 }
 
 export const logDisclaimers = (args: ReturnType<typeof parseArguments>) => {

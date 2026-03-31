@@ -10,8 +10,8 @@ import type {
   Page,
   Viewport,
 } from './third_party/index.js';
-import {takeSnapshot} from './tools/snapshot.js';
-import type {ContextPage} from './tools/ToolDefinition.js';
+import { takeSnapshot } from './tools/snapshot.js';
+import type { ContextPage } from './tools/ToolDefinition.js';
 import type {
   EmulationSettings,
   GeolocationOptions,
@@ -27,7 +27,7 @@ import type {
  * read/write access. The dialog field is private because it requires an
  * event listener lifecycle managed by the constructor/dispose pair.
  */
-export class McpPage implements ContextPage {
+export class BrowserPage implements ContextPage {
   readonly pptrPage: Page;
   readonly id: number;
 

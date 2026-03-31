@@ -7,19 +7,19 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-import type {TargetUniverse} from './DevtoolsUtils.js';
-import {UniverseManager} from './DevtoolsUtils.js';
-import {McpPage} from './McpPage.js';
+import type { TargetUniverse } from './DevtoolsUtils.js';
+import { UniverseManager } from './DevtoolsUtils.js';
+import { BrowserPage } from './BrowserPage.js';
 import {
   NetworkCollector,
   ConsoleCollector,
   type ListenerMap,
   type UncaughtError,
 } from './PageCollector.js';
-import type {DevTools} from './third_party/index.js';
+import type { DevTools } from './third_party/index.js';
 import type {
   Browser,
-  BrowserContext,
+  BrowserContext as PptrBrowserContext,
   ConsoleMessage,
   Debugger,
   HTTPRequest,
@@ -29,12 +29,12 @@ import type {
   Viewport,
   Target,
 } from './third_party/index.js';
-import {Locator} from './third_party/index.js';
-import {PredefinedNetworkConditions} from './third_party/index.js';
-import {listPages} from './tools/pages.js';
-import {CLOSE_PAGE_ERROR} from './tools/ToolDefinition.js';
-import type {Context, DevToolsData} from './tools/ToolDefinition.js';
-import type {TraceResult} from './trace-processing/parse.js';
+import { Locator } from './third_party/index.js';
+import { PredefinedNetworkConditions } from './third_party/index.js';
+import { listPages } from './tools/pages.js';
+import { CLOSE_PAGE_ERROR } from './tools/ToolDefinition.js';
+import type { Context, DevToolsData } from './tools/ToolDefinition.js';
+import type { TraceResult } from './trace-processing/parse.js';
 import type {
   EmulationSettings,
   GeolocationOptions,
@@ -46,10 +46,10 @@ import {
   ExtensionRegistry,
   type InstalledExtension,
 } from './utils/ExtensionRegistry.js';
-import {saveTemporaryFile} from './utils/files.js';
-import {WaitForHelper} from './WaitForHelper.js';
+import { saveTemporaryFile } from './utils/files.js';
+import { WaitForHelper } from './WaitForHelper.js';
 
-interface McpContextOptions {
+interface BrowserContextOptions {
   // Whether the DevTools windows are exposed as pages for debugging of DevTools.
   experimentalDevToolsDebugging: boolean;
   // Whether all page-like targets are exposed as pages.
@@ -78,27 +78,27 @@ function getNetworkMultiplierFromString(condition: string | null): number {
   return 1;
 }
 
-export class McpContext implements Context {
+export class BrowserContext implements Context {
   browser: Browser;
   logger: Debugger;
 
   // Maps LLM-provided isolatedContext name → Puppeteer BrowserContext.
-  #isolatedContexts = new Map<string, BrowserContext>();
+  #isolatedContexts = new Map<string, PptrBrowserContext>();
   // Auto-generated name counter for when no name is provided.
   #nextIsolatedContextId = 1;
 
   #pages: Page[] = [];
   #extensionServiceWorkers: ExtensionServiceWorker[] = [];
 
-  #mcpPages = new Map<Page, McpPage>();
-  #selectedPage?: McpPage;
+  #browserPages = new Map<Page, BrowserPage>();
+  #selectedPage?: BrowserPage;
   #networkCollector: NetworkCollector;
   #consoleCollector: ConsoleCollector;
   #devtoolsUniverseManager: UniverseManager;
   #extensionRegistry = new ExtensionRegistry();
 
   #isRunningTrace = false;
-  #screenRecorderData: {recorder: ScreenRecorder; filePath: string} | null =
+  #screenRecorderData: { recorder: ScreenRecorder; filePath: string } | null =
     null;
 
   #nextPageId = 1;
@@ -111,12 +111,12 @@ export class McpContext implements Context {
   #traceResults: TraceResult[] = [];
 
   #locatorClass: typeof Locator;
-  #options: McpContextOptions;
+  #options: BrowserContextOptions;
 
   private constructor(
     browser: Browser,
     logger: Debugger,
-    options: McpContextOptions,
+    options: BrowserContextOptions,
     locatorClass: typeof Locator,
   ) {
     this.browser = browser;
@@ -154,10 +154,10 @@ export class McpContext implements Context {
     this.#networkCollector.dispose();
     this.#consoleCollector.dispose();
     this.#devtoolsUniverseManager.dispose();
-    for (const mcpPage of this.#mcpPages.values()) {
-      mcpPage.dispose();
+    for (const browserPage of this.#browserPages.values()) {
+      browserPage.dispose();
     }
-    this.#mcpPages.clear();
+    this.#browserPages.clear();
     // Isolated contexts are intentionally not closed here.
     // Either the entire browser will be closed or we disconnect
     // without destroying browser state.
@@ -167,16 +167,16 @@ export class McpContext implements Context {
   static async from(
     browser: Browser,
     logger: Debugger,
-    opts: McpContextOptions,
+    opts: BrowserContextOptions,
     /* Let tests use unbundled Locator class to avoid overly strict checks within puppeteer that fail when mixing bundled and unbundled class instances */
     locatorClass: typeof Locator = Locator,
   ) {
-    const context = new McpContext(browser, logger, opts, locatorClass);
+    const context = new BrowserContext(browser, logger, opts, locatorClass);
     await context.#init();
     return context;
   }
 
-  resolveCdpRequestId(page: McpPage, cdpRequestId: string): number | undefined {
+  resolveCdpRequestId(page: BrowserPage, cdpRequestId: string): number | undefined {
     if (!cdpRequestId) {
       this.logger('no network request');
       return;
@@ -193,7 +193,7 @@ export class McpContext implements Context {
   }
 
   resolveCdpElementId(
-    page: McpPage,
+    page: BrowserPage,
     cdpBackendNodeId: number,
   ): string | undefined {
     if (!cdpBackendNodeId) {
@@ -220,7 +220,7 @@ export class McpContext implements Context {
   }
 
   getNetworkRequests(
-    page: McpPage,
+    page: BrowserPage,
     includePreservedRequests?: boolean,
   ): HTTPRequest[] {
     return this.#networkCollector.getData(
@@ -230,7 +230,7 @@ export class McpContext implements Context {
   }
 
   getConsoleData(
-    page: McpPage,
+    page: BrowserPage,
     includePreservedMessages?: boolean,
   ): Array<ConsoleMessage | Error | DevTools.AggregatedIssue | UncaughtError> {
     return this.#consoleCollector.getData(
@@ -239,7 +239,7 @@ export class McpContext implements Context {
     );
   }
 
-  getDevToolsUniverse(page: McpPage): TargetUniverse | null {
+  getDevToolsUniverse(page: BrowserPage): TargetUniverse | null {
     return this.#devtoolsUniverseManager.get(page.pptrPage);
   }
 
@@ -250,7 +250,7 @@ export class McpContext implements Context {
   }
 
   getConsoleMessageById(
-    page: McpPage,
+    page: BrowserPage,
     id: number,
   ): ConsoleMessage | Error | DevTools.AggregatedIssue | UncaughtError {
     return this.#consoleCollector.getById(page.pptrPage, id);
@@ -259,7 +259,7 @@ export class McpContext implements Context {
   async newPage(
     background?: boolean,
     isolatedContextName?: string,
-  ): Promise<McpPage> {
+  ): Promise<BrowserPage> {
     let page: Page;
     if (isolatedContextName !== undefined) {
       let ctx = this.#isolatedContexts.get(isolatedContextName);
@@ -269,13 +269,13 @@ export class McpContext implements Context {
       }
       page = await ctx.newPage();
     } else {
-      page = await this.browser.newPage({background});
+      page = await this.browser.newPage({ background });
     }
     await this.createPagesSnapshot();
-    this.selectPage(this.#getMcpPage(page));
+    this.selectPage(this.#getBrowserPage(page));
     this.#networkCollector.addPage(page);
     this.#consoleCollector.addPage(page);
-    return this.#getMcpPage(page);
+    return this.#getBrowserPage(page);
   }
   async closePage(pageId: number): Promise<void> {
     if (this.#pages.length === 1) {
@@ -284,16 +284,16 @@ export class McpContext implements Context {
     const page = this.getPageById(pageId);
     if (page) {
       page.dispose();
-      this.#mcpPages.delete(page.pptrPage);
+      this.#browserPages.delete(page.pptrPage);
     }
-    await page.pptrPage.close({runBeforeUnload: false});
+    await page.pptrPage.close({ runBeforeUnload: false });
   }
 
-  getNetworkRequestById(page: McpPage, reqid: number): HTTPRequest {
+  getNetworkRequestById(page: BrowserPage, reqid: number): HTTPRequest {
     return this.#networkCollector.getById(page.pptrPage, reqid);
   }
 
-  async restoreEmulation(page: McpPage) {
+  async restoreEmulation(page: BrowserPage) {
     const currentSetting = page.emulationSettings;
     await this.emulate(currentSetting, page.pptrPage);
   }
@@ -310,8 +310,8 @@ export class McpContext implements Context {
     targetPage?: Page,
   ): Promise<void> {
     const page = targetPage ?? this.getSelectedPptrPage();
-    const mcpPage = this.#getMcpPage(page);
-    const newSettings: EmulationSettings = {...mcpPage.emulationSettings};
+    const browserPage = this.#getBrowserPage(page);
+    const newSettings: EmulationSettings = { ...browserPage.emulationSettings };
 
     if (!options.networkConditions) {
       await page.emulateNetworkConditions(null);
@@ -327,7 +327,7 @@ export class McpContext implements Context {
     } else if (options.networkConditions in PredefinedNetworkConditions) {
       const networkCondition =
         PredefinedNetworkConditions[
-          options.networkConditions as keyof typeof PredefinedNetworkConditions
+        options.networkConditions as keyof typeof PredefinedNetworkConditions
         ];
       await page.emulateNetworkConditions(networkCondition);
       newSettings.networkConditions = options.networkConditions;
@@ -342,7 +342,7 @@ export class McpContext implements Context {
     }
 
     if (!options.geolocation) {
-      await page.setGeolocation({latitude: 0, longitude: 0});
+      await page.setGeolocation({ latitude: 0, longitude: 0 });
       delete newSettings.geolocation;
     } else {
       await page.setGeolocation(options.geolocation);
@@ -350,21 +350,21 @@ export class McpContext implements Context {
     }
 
     if (!options.userAgent) {
-      await page.setUserAgent({userAgent: undefined});
+      await page.setUserAgent({ userAgent: undefined });
       delete newSettings.userAgent;
     } else {
-      await page.setUserAgent({userAgent: options.userAgent});
+      await page.setUserAgent({ userAgent: options.userAgent });
       newSettings.userAgent = options.userAgent;
     }
 
     if (!options.colorScheme || options.colorScheme === 'auto') {
       await page.emulateMediaFeatures([
-        {name: 'prefers-color-scheme', value: ''},
+        { name: 'prefers-color-scheme', value: '' },
       ]);
       delete newSettings.colorScheme;
     } else {
       await page.emulateMediaFeatures([
-        {name: 'prefers-color-scheme', value: options.colorScheme},
+        { name: 'prefers-color-scheme', value: options.colorScheme },
       ]);
       newSettings.colorScheme = options.colorScheme;
     }
@@ -379,12 +379,12 @@ export class McpContext implements Context {
         hasTouch: false,
         isLandscape: false,
       };
-      const viewport = {...defaults, ...options.viewport};
+      const viewport = { ...defaults, ...options.viewport };
       await page.setViewport(viewport);
       newSettings.viewport = viewport;
     }
 
-    mcpPage.emulationSettings = Object.keys(newSettings).length
+    browserPage.emulationSettings = Object.keys(newSettings).length
       ? newSettings
       : {};
 
@@ -399,12 +399,12 @@ export class McpContext implements Context {
     return this.#isRunningTrace;
   }
 
-  getScreenRecorder(): {recorder: ScreenRecorder; filePath: string} | null {
+  getScreenRecorder(): { recorder: ScreenRecorder; filePath: string } | null {
     return this.#screenRecorderData;
   }
 
   setScreenRecorder(
-    data: {recorder: ScreenRecorder; filePath: string} | null,
+    data: { recorder: ScreenRecorder; filePath: string } | null,
   ): void {
     this.#screenRecorderData = data;
   }
@@ -426,13 +426,13 @@ export class McpContext implements Context {
     return page.pptrPage;
   }
 
-  getSelectedMcpPage(): McpPage {
+  getSelectedBrowserPage(): BrowserPage {
     const page = this.getSelectedPptrPage();
-    return this.#getMcpPage(page);
+    return this.#getBrowserPage(page);
   }
 
-  getPageById(pageId: number): McpPage {
-    const page = this.#mcpPages.values().find(mcpPage => mcpPage.id === pageId);
+  getPageById(pageId: number): BrowserPage {
+    const page = this.#browserPages.values().find(browserPage => browserPage.id === pageId);
     if (!page) {
       throw new Error('No page found');
     }
@@ -440,32 +440,32 @@ export class McpContext implements Context {
   }
 
   getPageId(page: Page): number | undefined {
-    return this.#mcpPages.get(page)?.id;
+    return this.#browserPages.get(page)?.id;
   }
 
-  #getMcpPage(page: Page): McpPage {
-    const mcpPage = this.#mcpPages.get(page);
-    if (!mcpPage) {
-      throw new Error('No McpPage found for the given page.');
+  #getBrowserPage(page: Page): BrowserPage {
+    const browserPage = this.#browserPages.get(page);
+    if (!browserPage) {
+      throw new Error('No BrowserPage found for the given page.');
     }
-    return mcpPage;
+    return browserPage;
   }
 
-  #getSelectedMcpPage(): McpPage {
-    return this.#getMcpPage(this.getSelectedPptrPage());
+  #getSelectedBrowserPage(): BrowserPage {
+    return this.#getBrowserPage(this.getSelectedPptrPage());
   }
 
   isPageSelected(page: Page): boolean {
     return this.#selectedPage?.pptrPage === page;
   }
 
-  selectPage(newPage: McpPage): void {
+  selectPage(newPage: BrowserPage): void {
     this.#selectedPage = newPage;
     this.#updateSelectedPageTimeouts();
   }
 
   #updateSelectedPageTimeouts() {
-    const page = this.#getSelectedMcpPage();
+    const page = this.#getSelectedBrowserPage();
     // For waiters 5sec timeout should be sufficient.
     // Increased in case we throttle the CPU
     const cpuMultiplier = page.cpuThrottlingRate;
@@ -485,8 +485,8 @@ export class McpContext implements Context {
   // 2-10) so a reverse index isn't worthwhile given the uid-reuse lifecycle
   // complexity it would introduce.
   getAXNodeByUid(uid: string) {
-    for (const mcpPage of this.#mcpPages.values()) {
-      const node = mcpPage.textSnapshot?.idToNode.get(uid);
+    for (const browserPage of this.#browserPages.values()) {
+      const node = browserPage.textSnapshot?.idToNode.get(uid);
       if (node) {
         return node;
       }
@@ -530,27 +530,27 @@ export class McpContext implements Context {
   }
 
   async createPagesSnapshot(): Promise<Page[]> {
-    const {pages: allPages, isolatedContextNames} = await this.#getAllPages();
+    const { pages: allPages, isolatedContextNames } = await this.#getAllPages();
 
     for (const page of allPages) {
-      let mcpPage = this.#mcpPages.get(page);
-      if (!mcpPage) {
-        mcpPage = new McpPage(page, this.#nextPageId++);
-        this.#mcpPages.set(page, mcpPage);
+      let browserPage = this.#browserPages.get(page);
+      if (!browserPage) {
+        browserPage = new BrowserPage(page, this.#nextPageId++);
+        this.#browserPages.set(page, browserPage);
         // We emulate a focused page for all pages to support multi-agent workflows.
         void page.emulateFocusedPage(true).catch(error => {
           this.logger('Error turning on focused page emulation', error);
         });
       }
-      mcpPage.isolatedContextName = isolatedContextNames.get(page);
+      browserPage.isolatedContextName = isolatedContextNames.get(page);
     }
 
-    // Prune orphaned #mcpPages entries (pages that no longer exist).
+    // Prune orphaned #browserPages entries (pages that no longer exist).
     const currentPages = new Set(allPages);
-    for (const [page, mcpPage] of this.#mcpPages) {
+    for (const [page, browserPage] of this.#browserPages) {
       if (!currentPages.has(page)) {
-        mcpPage.dispose();
-        this.#mcpPages.delete(page);
+        browserPage.dispose();
+        this.#browserPages.delete(page);
       }
     }
 
@@ -566,7 +566,7 @@ export class McpContext implements Context {
         this.#pages.indexOf(this.#selectedPage.pptrPage) === -1) &&
       this.#pages[0]
     ) {
-      this.selectPage(this.#getMcpPage(this.#pages[0]));
+      this.selectPage(this.#getBrowserPage(this.#pages[0]));
     }
 
     await this.detectOpenDevToolsWindows();
@@ -614,7 +614,7 @@ export class McpContext implements Context {
     }
 
     // Build a reverse lookup from BrowserContext instance → name.
-    const contextToName = new Map<BrowserContext, string>();
+    const contextToName = new Map<PptrBrowserContext, string>();
     for (const [name, ctx] of this.#isolatedContexts) {
       contextToName.set(ctx, name);
     }
@@ -640,17 +640,17 @@ export class McpContext implements Context {
       }
     }
 
-    return {pages: allPages, isolatedContextNames};
+    return { pages: allPages, isolatedContextNames };
   }
 
   async detectOpenDevToolsWindows() {
     this.logger('Detecting open DevTools windows');
-    const {pages} = await this.#getAllPages();
+    const { pages } = await this.#getAllPages();
 
     await Promise.all(
       pages.map(async page => {
-        const mcpPage = this.#mcpPages.get(page);
-        if (!mcpPage) {
+        const browserPage = this.#browserPages.get(page);
+        if (!browserPage) {
           return;
         }
 
@@ -659,12 +659,12 @@ export class McpContext implements Context {
         // Fall back to not exposing DevTools at all.
         try {
           if (await page.hasDevTools()) {
-            mcpPage.devToolsPage = await page.openDevTools();
+            browserPage.devToolsPage = await page.openDevTools();
           } else {
-            mcpPage.devToolsPage = undefined;
+            browserPage.devToolsPage = undefined;
           }
         } catch {
-          mcpPage.devToolsPage = undefined;
+          browserPage.devToolsPage = undefined;
         }
       }),
     );
@@ -685,14 +685,14 @@ export class McpContext implements Context {
   }
 
   getIsolatedContextName(page: Page): string | undefined {
-    return this.#mcpPages.get(page)?.isolatedContextName;
+    return this.#browserPages.get(page)?.isolatedContextName;
   }
 
   getDevToolsPage(page: Page): Page | undefined {
-    return this.#mcpPages.get(page)?.devToolsPage;
+    return this.#browserPages.get(page)?.devToolsPage;
   }
 
-  async getDevToolsData(page: McpPage): Promise<DevToolsData> {
+  async getDevToolsData(page: BrowserPage): Promise<DevToolsData> {
     try {
       this.logger('Getting DevTools UI data');
       const devtoolsPage = this.getDevToolsPage(page.pptrPage);
@@ -700,7 +700,7 @@ export class McpContext implements Context {
         this.logger('No DevTools page detected');
         return {};
       }
-      const {cdpRequestId, cdpBackendNodeId} = await devtoolsPage.evaluate(
+      const { cdpRequestId, cdpBackendNodeId } = await devtoolsPage.evaluate(
         async () => {
           // @ts-expect-error no types
           const UI = await import('/bundled/ui/legacy/legacy.js');
@@ -718,7 +718,7 @@ export class McpContext implements Context {
           };
         },
       );
-      return {cdpBackendNodeId, cdpRequestId};
+      return { cdpBackendNodeId, cdpRequestId };
     } catch (err) {
       this.logger('error getting devtools data', err);
     }
@@ -729,7 +729,7 @@ export class McpContext implements Context {
    * Creates a text snapshot of a page.
    */
   async createTextSnapshot(
-    page: McpPage,
+    page: BrowserPage,
     verbose = false,
     devtoolsData: DevToolsData | undefined = undefined,
   ): Promise<void> {
@@ -741,7 +741,7 @@ export class McpContext implements Context {
       return;
     }
 
-    const {uniqueBackendNodeIdToMcpId} = page;
+    const { uniqueBackendNodeIdToMcpId } = page;
 
     const snapshotId = this.#nextSnapshotId++;
     // Iterate through the whole accessibility node tree and assign node ids that
@@ -813,21 +813,21 @@ export class McpContext implements Context {
   async saveTemporaryFile(
     data: Uint8Array<ArrayBufferLike>,
     filename: string,
-  ): Promise<{filepath: string}> {
+  ): Promise<{ filepath: string }> {
     return await saveTemporaryFile(data, filename);
   }
   async saveFile(
     data: Uint8Array<ArrayBufferLike>,
     filename: string,
-  ): Promise<{filename: string}> {
+  ): Promise<{ filename: string }> {
     try {
       const filePath = path.resolve(filename);
-      await fs.mkdir(path.dirname(filePath), {recursive: true});
+      await fs.mkdir(path.dirname(filePath), { recursive: true });
       await fs.writeFile(filePath, data);
-      return {filename: filePath};
+      return { filename: filePath };
     } catch (err) {
       this.logger(err);
-      throw new Error('Could not save a file', {cause: err});
+      throw new Error('Could not save a file', { cause: err });
     }
   }
 
@@ -851,9 +851,9 @@ export class McpContext implements Context {
 
   waitForEventsAfterAction(
     action: () => Promise<unknown>,
-    options?: {timeout?: number},
+    options?: { timeout?: number },
   ): Promise<void> {
-    const page = this.#getSelectedMcpPage();
+    const page = this.#getSelectedBrowserPage();
     const cpuMultiplier = page.cpuThrottlingRate;
     const networkMultiplier = getNetworkMultiplierFromString(
       page.networkConditions,
@@ -908,7 +908,7 @@ export class McpContext implements Context {
         },
       } as ListenerMap;
     });
-    const {pages} = await this.#getAllPages();
+    const { pages } = await this.#getAllPages();
     await this.#networkCollector.init(pages);
   }
 

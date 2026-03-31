@@ -11,17 +11,17 @@ import {describe, it} from 'node:test';
 
 import {evaluate, navigate, screenshot} from '../../../src/tools/slim/tools.js';
 import {screenshots} from '../../snapshot.js';
-import {withMcpContext} from '../../utils.js';
+import {withBrowserContext} from '../../utils.js';
 
 describe('slim', () => {
   it('evaluates', async t => {
-    await withMcpContext(async (response, context) => {
+    await withBrowserContext(async (response, context) => {
       await evaluate.handler(
         {
           params: {
             script: `2 * 5`,
           },
-          page: context.getSelectedMcpPage(),
+          page: context.getSelectedBrowserPage(),
         },
         response,
         context,
@@ -31,13 +31,13 @@ describe('slim', () => {
   });
 
   it('handles errors', async t => {
-    await withMcpContext(async (response, context) => {
+    await withBrowserContext(async (response, context) => {
       await evaluate.handler(
         {
           params: {
             script: `throw new Error('test error')`,
           },
-          page: context.getSelectedMcpPage(),
+          page: context.getSelectedBrowserPage(),
         },
         response,
         context,
@@ -47,11 +47,11 @@ describe('slim', () => {
   });
 
   it('navigates to correct page', async t => {
-    await withMcpContext(async (response, context) => {
+    await withBrowserContext(async (response, context) => {
       await navigate.handler(
         {
           params: {url: 'data:text/html,<div>Hello MCP</div>'},
-          page: context.getSelectedMcpPage(),
+          page: context.getSelectedBrowserPage(),
         },
         response,
         context,
@@ -67,12 +67,12 @@ describe('slim', () => {
   });
 
   it('with default options', async () => {
-    await withMcpContext(async (response, context) => {
+    await withBrowserContext(async (response, context) => {
       const fixture = screenshots.basic;
       const page = context.getSelectedPptrPage();
       await page.setContent(fixture.html);
       await screenshot.handler(
-        {params: {format: 'png'}, page: context.getSelectedMcpPage()},
+        {params: {format: 'png'}, page: context.getSelectedBrowserPage()},
         response,
         context,
       );

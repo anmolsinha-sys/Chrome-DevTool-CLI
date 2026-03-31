@@ -6,13 +6,13 @@
 
 import assert from 'node:assert';
 import path from 'node:path';
-import {describe, it} from 'node:test';
+import { describe, it } from 'node:test';
 
-import type {ParsedArguments} from '../../src/bin/chrome-devtools-mcp-cli-options.js';
-import {installExtension} from '../../src/tools/extensions.js';
-import {evaluateScript} from '../../src/tools/script.js';
-import {serverHooks} from '../server.js';
-import {extractExtensionId, html, withMcpContext} from '../utils.js';
+import type { ParsedArguments } from '../../src/bin/chrome-devtools-mcp-cli-options.js';
+import { installExtension } from '../../src/tools/extensions.js';
+import { evaluateScript } from '../../src/tools/script.js';
+import { serverHooks } from '../server.js';
+import { extractExtensionId, html, withBrowserContext } from '../utils.js';
 
 const EXTENSION_PATH = path.join(
   import.meta.dirname,
@@ -24,10 +24,10 @@ describe('script', () => {
 
   describe('browser_evaluate_script', () => {
     it('evaluates', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         await evaluateScript().handler(
           {
-            params: {function: String(() => 2 * 5)},
+            params: { function: String(() => 2 * 5) },
           },
           response,
           context,
@@ -37,10 +37,10 @@ describe('script', () => {
       });
     });
     it('runs in selected page', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         await evaluateScript().handler(
           {
-            params: {function: String(() => document.title)},
+            params: { function: String(() => document.title) },
           },
           response,
           context,
@@ -59,7 +59,7 @@ describe('script', () => {
         response.resetResponseLineForTesting();
         await evaluateScript().handler(
           {
-            params: {function: String(() => document.title)},
+            params: { function: String(() => document.title) },
           },
           response,
           context,
@@ -71,7 +71,7 @@ describe('script', () => {
     });
 
     it('work for complex objects', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const page = context.getSelectedPptrPage();
 
         await page.setContent(html`<script src="./scripts.js"></script> `);
@@ -82,9 +82,9 @@ describe('script', () => {
               function: String(() => {
                 const scripts = Array.from(
                   document.head.querySelectorAll('script'),
-                ).map(s => ({src: s.src, async: s.async, defer: s.defer}));
+                ).map(s => ({ src: s.src, async: s.async, defer: s.defer }));
 
-                return {scripts};
+                return { scripts };
               }),
             },
           },
@@ -99,7 +99,7 @@ describe('script', () => {
     });
 
     it('work for async functions', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const page = context.getSelectedPptrPage();
 
         await page.setContent(html`<script src="./scripts.js"></script> `);
@@ -122,12 +122,12 @@ describe('script', () => {
     });
 
     it('work with one argument', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const page = context.getSelectedPptrPage();
 
         await page.setContent(html`<button id="test">test</button>`);
 
-        await context.createTextSnapshot(context.getSelectedMcpPage());
+        await context.createTextSnapshot(context.getSelectedBrowserPage());
 
         await evaluateScript().handler(
           {
@@ -147,12 +147,12 @@ describe('script', () => {
     });
 
     it('work with multiple args', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const page = context.getSelectedPptrPage();
 
         await page.setContent(html`<button id="test">test</button>`);
 
-        await context.createTextSnapshot(context.getSelectedMcpPage());
+        await context.createTextSnapshot(context.getSelectedBrowserPage());
 
         await evaluateScript().handler(
           {
@@ -178,10 +178,10 @@ describe('script', () => {
       );
       server.addHtmlRoute('/main', html`<iframe src="/iframe"></iframe>`);
 
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const page = context.getSelectedPptrPage();
         await page.goto(server.getRoute('/main'));
-        await context.createTextSnapshot(context.getSelectedMcpPage());
+        await context.createTextSnapshot(context.getSelectedBrowserPage());
         await evaluateScript().handler(
           {
             params: {
@@ -199,22 +199,22 @@ describe('script', () => {
       });
     });
     it('evaluates inside extension service worker', async () => {
-      await withMcpContext(
+      await withBrowserContext(
         async (response, context) => {
           await installExtension.handler(
-            {params: {path: EXTENSION_PATH}},
+            { params: { path: EXTENSION_PATH } },
             response,
             context,
           );
 
           const extensionId = extractExtensionId(response);
           const swTarget = await context.browser.waitForTarget(
-            t => t.type() === 'service_worker' && t.url().includes(extensionId),
+            (t: any) => t.type() === 'service_worker' && t.url().includes(extensionId),
           );
 
           await context.createExtensionServiceWorkersSnapshot();
           const swList = context.getExtensionServiceWorkers();
-          const sw = swList.find(s => s.target === swTarget);
+          const sw = swList.find((s: any) => s.target === swTarget);
 
           if (!sw) {
             assert.fail('Service worker not found in context list');
@@ -242,12 +242,12 @@ describe('script', () => {
           assert.strictEqual(JSON.parse(lineEvaluation), 'has-chrome');
         },
         {},
-        {categoryExtensions: true} as ParsedArguments,
+        { categoryExtensions: true } as ParsedArguments,
       );
     });
 
     it('throws error when both pageId and serviceWorkerId are provided', async () => {
-      await withMcpContext(
+      await withBrowserContext(
         async (response, context) => {
           await assert.rejects(
             evaluateScript({
@@ -269,12 +269,12 @@ describe('script', () => {
           );
         },
         {},
-        {categoryExtensions: true} as ParsedArguments,
+        { categoryExtensions: true } as ParsedArguments,
       );
     });
 
     it('throws error when args are provided with serviceWorkerId', async () => {
-      await withMcpContext(
+      await withBrowserContext(
         async (response, context) => {
           await assert.rejects(
             evaluateScript({
@@ -297,7 +297,7 @@ describe('script', () => {
           );
         },
         {},
-        {categoryExtensions: true} as ParsedArguments,
+        { categoryExtensions: true } as ParsedArguments,
       );
     });
   });

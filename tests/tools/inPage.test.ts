@@ -10,12 +10,12 @@ import {describe, it} from 'node:test';
 import type {ParsedArguments} from '../../src/bin/chrome-devtools-mcp-cli-options.js';
 import type {ToolGroup, ToolDefinition} from '../../src/tools/inPage.js';
 import {listInPageTools} from '../../src/tools/inPage.js';
-import {withMcpContext} from '../utils.js';
+import {withBrowserContext} from '../utils.js';
 
 describe('inPage', () => {
   describe('list_in_page_tools', () => {
     it('lists tools', async () => {
-      await withMcpContext(
+      await withBrowserContext(
         async (response, context) => {
           const page = await context.newPage();
 
@@ -71,7 +71,7 @@ describe('inPage', () => {
     });
 
     it('handles empty response', async () => {
-      await withMcpContext(
+      await withBrowserContext(
         async (response, context) => {
           const page = await context.newPage();
           await page.pptrPage.evaluate(() => {
@@ -100,7 +100,7 @@ describe('inPage', () => {
     });
 
     it('handles no response', async () => {
-      await withMcpContext(
+      await withBrowserContext(
         async (response, context) => {
           const page = await context.newPage();
           await page.pptrPage.evaluate(() => {
@@ -128,7 +128,7 @@ describe('inPage', () => {
     });
 
     it('handles no eventListener', async () => {
-      await withMcpContext(
+      await withBrowserContext(
         async (response, context) => {
           const page = await context.newPage();
           await listInPageTools.handler({params: {}, page}, response, context);

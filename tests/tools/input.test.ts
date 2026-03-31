@@ -7,10 +7,10 @@
 import assert from 'node:assert';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import {describe, it} from 'node:test';
+import { describe, it } from 'node:test';
 
-import type {ParsedArguments} from '../../src/bin/chrome-devtools-mcp-cli-options.js';
-import {McpResponse} from '../../src/McpResponse.js';
+import type { ParsedArguments } from '../../src/bin/chrome-devtools-mcp-cli-options.js';
+import { BrowserResponse } from '../../src/BrowserResponse.js';
 import {
   click,
   hover,
@@ -22,27 +22,27 @@ import {
   clickAt,
   typeText,
 } from '../../src/tools/input.js';
-import {parseKey} from '../../src/utils/keyboard.js';
-import {serverHooks} from '../server.js';
-import {html, withMcpContext} from '../utils.js';
+import { parseKey } from '../../src/utils/keyboard.js';
+import { serverHooks } from '../server.js';
+import { html, withBrowserContext } from '../utils.js';
 
 describe('input', () => {
   const server = serverHooks();
 
   describe('click', () => {
     it('clicks', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const page = context.getSelectedPptrPage();
         await page.setContent(
           html`<button onclick="this.innerText = 'clicked';">test</button>`,
         );
-        await context.createTextSnapshot(context.getSelectedMcpPage());
+        await context.createTextSnapshot(context.getSelectedBrowserPage());
         await click.handler(
           {
             params: {
               uid: '1_1',
             },
-            page: context.getSelectedMcpPage(),
+            page: context.getSelectedBrowserPage(),
           },
           response,
           context,
@@ -56,21 +56,21 @@ describe('input', () => {
       });
     });
     it('double clicks', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const page = context.getSelectedPptrPage();
         await page.setContent(
           html`<button ondblclick="this.innerText = 'dblclicked';"
             >test</button
           >`,
         );
-        await context.createTextSnapshot(context.getSelectedMcpPage());
+        await context.createTextSnapshot(context.getSelectedBrowserPage());
         await click.handler(
           {
             params: {
               uid: '1_1',
               dblClick: true,
             },
-            page: context.getSelectedMcpPage(),
+            page: context.getSelectedBrowserPage(),
           },
           response,
           context,
@@ -95,16 +95,16 @@ describe('input', () => {
         res.end();
       });
 
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const page = context.getSelectedPptrPage();
         await page.goto(server.getRoute('/link'));
-        await context.createTextSnapshot(context.getSelectedMcpPage());
+        await context.createTextSnapshot(context.getSelectedBrowserPage());
         const clickPromise = click.handler(
           {
             params: {
               uid: '1_1',
             },
-            page: context.getSelectedMcpPage(),
+            page: context.getSelectedBrowserPage(),
           },
           response,
           context,
@@ -138,17 +138,17 @@ describe('input', () => {
           </script>
         `,
       );
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const page = context.getSelectedPptrPage();
         await page.goto(server.getRoute('/unstable'));
-        await context.createTextSnapshot(context.getSelectedMcpPage());
+        await context.createTextSnapshot(context.getSelectedBrowserPage());
         const handlerResolveTime = await click
           .handler(
             {
               params: {
                 uid: '1_1',
               },
-              page: context.getSelectedMcpPage(),
+              page: context.getSelectedBrowserPage(),
             },
             response,
             context,
@@ -164,18 +164,18 @@ describe('input', () => {
     });
 
     it('does not include snapshot by default', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const page = context.getSelectedPptrPage();
         await page.setContent(
           html`<button onclick="this.innerText = 'clicked';">test</button>`,
         );
-        await context.createTextSnapshot(context.getSelectedMcpPage());
+        await context.createTextSnapshot(context.getSelectedBrowserPage());
         await click.handler(
           {
             params: {
               uid: '1_1',
             },
-            page: context.getSelectedMcpPage(),
+            page: context.getSelectedBrowserPage(),
           },
           response,
           context,
@@ -189,19 +189,19 @@ describe('input', () => {
     });
 
     it('includes snapshot if includeSnapshot is true', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const page = context.getSelectedPptrPage();
         await page.setContent(
           html`<button onclick="this.innerText = 'clicked';">test</button>`,
         );
-        await context.createTextSnapshot(context.getSelectedMcpPage());
+        await context.createTextSnapshot(context.getSelectedBrowserPage());
         await click.handler(
           {
             params: {
               uid: '1_1',
               includeSnapshot: true,
             },
-            page: context.getSelectedMcpPage(),
+            page: context.getSelectedBrowserPage(),
           },
           response,
           context,
@@ -217,18 +217,18 @@ describe('input', () => {
 
   describe('hover', () => {
     it('hovers', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const page = context.getSelectedPptrPage();
         await page.setContent(
           html`<button onmouseover="this.innerText = 'hovered';">test</button>`,
         );
-        await context.createTextSnapshot(context.getSelectedMcpPage());
+        await context.createTextSnapshot(context.getSelectedBrowserPage());
         await hover.handler(
           {
             params: {
               uid: '1_1',
             },
-            page: context.getSelectedMcpPage(),
+            page: context.getSelectedBrowserPage(),
           },
           response,
           context,
@@ -245,7 +245,7 @@ describe('input', () => {
 
   describe('click_at', () => {
     it('clicks at coordinates', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const page = context.getSelectedPptrPage();
         await page.setContent(
           html`<div
@@ -253,14 +253,14 @@ describe('input', () => {
             onclick="this.innerText = 'clicked'"
           ></div>`,
         );
-        await context.createTextSnapshot(context.getSelectedMcpPage());
+        await context.createTextSnapshot(context.getSelectedBrowserPage());
         await clickAt.handler(
           {
             params: {
               x: 50,
               y: 50,
             },
-            page: context.getSelectedMcpPage(),
+            page: context.getSelectedBrowserPage(),
           },
           response,
           context,
@@ -275,7 +275,7 @@ describe('input', () => {
     });
 
     it('double clicks at coordinates', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const page = context.getSelectedPptrPage();
         await page.setContent(
           html`<div
@@ -283,7 +283,7 @@ describe('input', () => {
             ondblclick="this.innerText = 'dblclicked'"
           ></div>`,
         );
-        await context.createTextSnapshot(context.getSelectedMcpPage());
+        await context.createTextSnapshot(context.getSelectedBrowserPage());
         await clickAt.handler(
           {
             params: {
@@ -291,7 +291,7 @@ describe('input', () => {
               y: 50,
               dblClick: true,
             },
-            page: context.getSelectedMcpPage(),
+            page: context.getSelectedBrowserPage(),
           },
           response,
           context,
@@ -308,17 +308,17 @@ describe('input', () => {
 
   describe('fill', () => {
     it('fills out an input', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const page = context.getSelectedPptrPage();
         await page.setContent(html`<input />`);
-        await context.createTextSnapshot(context.getSelectedMcpPage());
+        await context.createTextSnapshot(context.getSelectedBrowserPage());
         await fill.handler(
           {
             params: {
               uid: '1_1',
               value: 'test',
             },
-            page: context.getSelectedMcpPage(),
+            page: context.getSelectedBrowserPage(),
           },
           response,
           context,
@@ -333,7 +333,7 @@ describe('input', () => {
     });
 
     it('fills out a select by text', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const page = context.getSelectedPptrPage();
         await page.setContent(
           html`<select
@@ -341,14 +341,14 @@ describe('input', () => {
             ><option value="v2">two</option></select
           >`,
         );
-        await context.createTextSnapshot(context.getSelectedMcpPage());
+        await context.createTextSnapshot(context.getSelectedBrowserPage());
         await fill.handler(
           {
             params: {
               uid: '1_1',
               value: 'two',
             },
-            page: context.getSelectedMcpPage(),
+            page: context.getSelectedBrowserPage(),
           },
           response,
           context,
@@ -366,17 +366,17 @@ describe('input', () => {
     });
 
     it('fills out a textarea marked as combobox', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const page = context.getSelectedPptrPage();
         await page.setContent(html`<textarea role="combobox"></textarea>`);
-        await context.createTextSnapshot(context.getSelectedMcpPage());
+        await context.createTextSnapshot(context.getSelectedBrowserPage());
         await fill.handler(
           {
             params: {
               uid: '1_1',
               value: '1',
             },
-            page: context.getSelectedMcpPage(),
+            page: context.getSelectedBrowserPage(),
           },
           response,
           context,
@@ -395,10 +395,10 @@ describe('input', () => {
     });
 
     it('fills out a textarea with long text', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const page = context.getSelectedPptrPage();
         await page.setContent(html`<textarea></textarea>`);
-        await context.createTextSnapshot(context.getSelectedMcpPage());
+        await context.createTextSnapshot(context.getSelectedBrowserPage());
         page.setDefaultTimeout(1000);
         await fill.handler(
           {
@@ -406,7 +406,7 @@ describe('input', () => {
               uid: '1_1',
               value: '1'.repeat(3000),
             },
-            page: context.getSelectedMcpPage(),
+            page: context.getSelectedBrowserPage(),
           },
           response,
           context,
@@ -427,17 +427,17 @@ describe('input', () => {
     });
 
     it('types text', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const page = context.getSelectedPptrPage();
         await page.setContent(html`<textarea></textarea>`);
         await page.click('textarea');
-        await context.createTextSnapshot(context.getSelectedMcpPage());
+        await context.createTextSnapshot(context.getSelectedBrowserPage());
         await typeText.handler(
           {
             params: {
               text: 'test',
             },
-            page: context.getSelectedMcpPage(),
+            page: context.getSelectedBrowserPage(),
           },
           response,
           context,
@@ -453,18 +453,18 @@ describe('input', () => {
     });
 
     it('types text with submit key', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const page = context.getSelectedPptrPage();
         await page.setContent(html`<textarea></textarea>`);
         await page.click('textarea');
-        await context.createTextSnapshot(context.getSelectedMcpPage());
+        await context.createTextSnapshot(context.getSelectedBrowserPage());
         await typeText.handler(
           {
             params: {
               text: 'test',
               submitKey: 'Tab',
             },
-            page: context.getSelectedMcpPage(),
+            page: context.getSelectedBrowserPage(),
           },
           response,
           context,
@@ -490,11 +490,11 @@ describe('input', () => {
     });
 
     it('errors on invalid submit key', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const page = context.getSelectedPptrPage();
         await page.setContent(html`<textarea></textarea>`);
         await page.click('textarea');
-        await context.createTextSnapshot(context.getSelectedMcpPage());
+        await context.createTextSnapshot(context.getSelectedBrowserPage());
         try {
           await typeText.handler(
             {
@@ -502,7 +502,7 @@ describe('input', () => {
                 text: 'test',
                 submitKey: 'XXX',
               },
-              page: context.getSelectedMcpPage(),
+              page: context.getSelectedBrowserPage(),
             },
             response,
             context,
@@ -514,7 +514,7 @@ describe('input', () => {
     });
 
     it('reproduction: fill isolation', async () => {
-      await withMcpContext(async (_response, context) => {
+      await withBrowserContext(async (_response, context) => {
         const page = context.getSelectedPptrPage();
         await page.setContent(
           html`<form>
@@ -528,17 +528,17 @@ describe('input', () => {
             />
           </form>`,
         );
-        await context.createTextSnapshot(context.getSelectedMcpPage());
+        await context.createTextSnapshot(context.getSelectedBrowserPage());
 
         // Fill email
-        const response1 = new McpResponse({} as ParsedArguments);
+        const response1 = new BrowserResponse({} as ParsedArguments);
         await fill.handler(
           {
             params: {
               uid: '1_1', // email input
               value: 'new@test.com',
             },
-            page: context.getSelectedMcpPage(),
+            page: context.getSelectedBrowserPage(),
           },
           response1,
           context,
@@ -549,14 +549,14 @@ describe('input', () => {
         );
 
         // Fill password
-        const response2 = new McpResponse({} as ParsedArguments);
+        const response2 = new BrowserResponse({} as ParsedArguments);
         await fill.handler(
           {
             params: {
               uid: '1_2', // password input
               value: 'secret',
             },
-            page: context.getSelectedMcpPage(),
+            page: context.getSelectedBrowserPage(),
           },
           response2,
           context,
@@ -591,7 +591,7 @@ describe('input', () => {
 
   describe('drags', () => {
     it('drags one element onto another', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const page = context.getSelectedPptrPage();
         await page.setContent(
           html`<div
@@ -622,14 +622,14 @@ describe('input', () => {
               });
             </script>`,
         );
-        await context.createTextSnapshot(context.getSelectedMcpPage());
+        await context.createTextSnapshot(context.getSelectedBrowserPage());
         await drag.handler(
           {
             params: {
               from_uid: '1_1',
               to_uid: '1_2',
             },
-            page: context.getSelectedMcpPage(),
+            page: context.getSelectedBrowserPage(),
           },
           response,
           context,
@@ -646,7 +646,7 @@ describe('input', () => {
 
   describe('fill form', () => {
     it('successfully fills out the form', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const page = context.getSelectedPptrPage();
         await page.setContent(
           html`<form>
@@ -666,7 +666,7 @@ describe('input', () => {
             />
           </form>`,
         );
-        await context.createTextSnapshot(context.getSelectedMcpPage());
+        await context.createTextSnapshot(context.getSelectedBrowserPage());
         await fillForm.handler(
           {
             params: {
@@ -681,7 +681,7 @@ describe('input', () => {
                 },
               ],
             },
-            page: context.getSelectedMcpPage(),
+            page: context.getSelectedBrowserPage(),
           },
           response,
           context,
@@ -711,7 +711,7 @@ describe('input', () => {
       const testFilePath = path.join(process.cwd(), 'test.txt');
       await fs.writeFile(testFilePath, 'test file content');
 
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const page = context.getSelectedPptrPage();
         await page.setContent(
           html`<form>
@@ -721,14 +721,14 @@ describe('input', () => {
             />
           </form>`,
         );
-        await context.createTextSnapshot(context.getSelectedMcpPage());
+        await context.createTextSnapshot(context.getSelectedBrowserPage());
         await uploadFile.handler(
           {
             params: {
               uid: '1_1',
               filePath: testFilePath,
             },
-            page: context.getSelectedMcpPage(),
+            page: context.getSelectedBrowserPage(),
           },
           response,
           context,
@@ -747,7 +747,7 @@ describe('input', () => {
       const testFilePath = path.join(process.cwd(), 'test.txt');
       await fs.writeFile(testFilePath, 'test file content');
 
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const page = context.getSelectedPptrPage();
         await page.setContent(
           html`<button id="file-chooser-button">Upload file</button>
@@ -764,14 +764,14 @@ describe('input', () => {
                 });
             </script>`,
         );
-        await context.createTextSnapshot(context.getSelectedMcpPage());
+        await context.createTextSnapshot(context.getSelectedBrowserPage());
         await uploadFile.handler(
           {
             params: {
               uid: '1_1',
               filePath: testFilePath,
             },
-            page: context.getSelectedMcpPage(),
+            page: context.getSelectedBrowserPage(),
           },
           response,
           context,
@@ -781,7 +781,7 @@ describe('input', () => {
           response.responseLines[0],
           `File uploaded from ${testFilePath}.`,
         );
-        const uploadedFileName = await page.$eval('#file-input', el => {
+        const uploadedFileName = await page.$eval('#file-input', (el: any) => {
           const input = el as HTMLInputElement;
           return input.files?.[0]?.name;
         });
@@ -795,10 +795,10 @@ describe('input', () => {
       const testFilePath = path.join(process.cwd(), 'test.txt');
       await fs.writeFile(testFilePath, 'test file content');
 
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const page = context.getSelectedPptrPage();
         await page.setContent(html`<div>Not a file input</div>`);
-        await context.createTextSnapshot(context.getSelectedMcpPage());
+        await context.createTextSnapshot(context.getSelectedBrowserPage());
 
         await assert.rejects(
           uploadFile.handler(
@@ -807,7 +807,7 @@ describe('input', () => {
                 uid: '1_1',
                 filePath: testFilePath,
               },
-              page: context.getSelectedMcpPage(),
+              page: context.getSelectedBrowserPage(),
             },
             response,
             context,
@@ -855,7 +855,7 @@ describe('input', () => {
     });
 
     it('processes press_key', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const page = context.getSelectedPptrPage();
         await page.setContent(
           html`<script>
@@ -864,14 +864,14 @@ describe('input', () => {
             document.addEventListener('keyup', e => logs.push('u' + e.key));
           </script>`,
         );
-        await context.createTextSnapshot(context.getSelectedMcpPage());
+        await context.createTextSnapshot(context.getSelectedBrowserPage());
 
         await pressKey.handler(
           {
             params: {
               key: 'Control+Shift+C',
             },
-            page: context.getSelectedMcpPage(),
+            page: context.getSelectedBrowserPage(),
           },
           response,
           context,

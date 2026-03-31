@@ -7,17 +7,32 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import {Client} from '@modelcontextprotocol/sdk/client/index.js';
-import {StdioClientTransport} from '@modelcontextprotocol/sdk/client/stdio.js';
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 
-import {parseArguments} from '../build/src/bin/chrome-devtools-mcp-cli-options.js';
-import {labels} from '../build/src/tools/categories.js';
-import {createTools} from '../build/src/tools/tools.js';
+import { parseArguments } from '../build/src/bin/chrome-devtools-mcp-cli-options.js';
+import { labels } from '../build/src/tools/categories.js';
+import { createTools } from '../build/src/tools/tools.js';
 
 const OUTPUT_PATH = path.join(
   import.meta.dirname,
-  '../src/bin/cliDefinitions.ts',
+  '../src/bin/chrome-devtools-cli-options.ts',
 );
+
+const ALIASES: Record<string, string> = {
+  navigate_page: 'open',
+  take_screenshot: 'screenshot',
+  type_text: 'type',
+  press_key: 'press',
+  new_page: 'tab',
+  close_page: 'close',
+  evaluate_script: 'evaluate',
+  list_pages: 'ls',
+  get_console_message: 'console-log',
+  list_console_messages: 'console-logs',
+  get_network_request: 'network-request',
+  list_network_requests: 'network-requests',
+};
 
 async function fetchTools() {
   console.log('Connecting to chrome-devtools-mcp to fetch tools...');
@@ -30,7 +45,7 @@ async function fetchTools() {
   const transport = new StdioClientTransport({
     command: 'node',
     args: [serverPath],
-    env: {...process.env, CHROME_DEVTOOLS_MCP_NO_USAGE_STATISTICS: 'true'},
+    env: { ...process.env, CHROME_DEVTOOLS_MCP_NO_USAGE_STATISTICS: 'true' },
   });
 
   const client = new Client(
@@ -131,7 +146,12 @@ async function generateCli() {
 
   const commands: Record<
     string,
-    {description: string; category: string; args: Record<string, CliOption>}
+    {
+      description: string;
+      category: string;
+      originalName: string;
+      args: Record<string, CliOption>;
+    }
   > = {};
 
   for (const tool of sortedTools) {
@@ -147,11 +167,19 @@ async function generateCli() {
     if (!tool.description) {
       throw new Error(`Tool ${tool.name} is missing descripttion`);
     }
-    commands[tool.name] = {
+    const commandName = ALIASES[tool.name] || tool.name;
+    const commandDef = {
       description: tool.description,
       category,
+      originalName: tool.name,
       args,
     };
+    commands[commandName] = commandDef;
+
+    // If an alias was used, also keep the original name for backward compatibility
+    if (ALIASES[tool.name]) {
+      commands[tool.name] = commandDef;
+    }
   }
 
   const lines: string[] = [];
@@ -176,13 +204,14 @@ export type Commands = Record<
   {
     description: string;
     category: string;
+    originalName: string;
     args: Record<string, ArgDef>
   }
 >;
 export const commands: Commands = ${JSON.stringify(commands, null, 2)} as const;
 `);
 
-  fs.mkdirSync(path.dirname(OUTPUT_PATH), {recursive: true});
+  fs.mkdirSync(path.dirname(OUTPUT_PATH), { recursive: true });
   fs.writeFileSync(OUTPUT_PATH, lines.join(''));
   console.log(`Generated CLI at ${OUTPUT_PATH}`);
 }

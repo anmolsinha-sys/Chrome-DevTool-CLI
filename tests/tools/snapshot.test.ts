@@ -8,14 +8,14 @@ import assert from 'node:assert';
 import {describe, it} from 'node:test';
 
 import {takeSnapshot, waitFor} from '../../src/tools/snapshot.js';
-import {html, withMcpContext} from '../utils.js';
+import {html, withBrowserContext} from '../utils.js';
 
 describe('snapshot', () => {
   describe('browser_snapshot', () => {
     it('includes a snapshot', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         await takeSnapshot.handler(
-          {params: {}, page: context.getSelectedMcpPage()},
+          {params: {}, page: context.getSelectedBrowserPage()},
           response,
           context,
         );
@@ -25,7 +25,7 @@ describe('snapshot', () => {
   });
   describe('browser_wait_for', () => {
     it('should work', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const page = context.getSelectedPptrPage();
 
         await page.setContent(
@@ -36,7 +36,7 @@ describe('snapshot', () => {
             params: {
               text: ['Hello'],
             },
-            page: context.getSelectedMcpPage(),
+            page: context.getSelectedBrowserPage(),
           },
           response,
           context,
@@ -51,7 +51,7 @@ describe('snapshot', () => {
     });
 
     it('should work with any-match array', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const page = context.getSelectedPptrPage();
 
         await page.setContent(
@@ -62,7 +62,7 @@ describe('snapshot', () => {
             params: {
               text: ['Complete', 'Error'],
             },
-            page: context.getSelectedMcpPage(),
+            page: context.getSelectedBrowserPage(),
           },
           response,
           context,
@@ -77,7 +77,7 @@ describe('snapshot', () => {
     });
 
     it('should work with any-match array when element shows up later', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const page = context.getSelectedPptrPage();
 
         const handlePromise = waitFor.handler(
@@ -85,7 +85,7 @@ describe('snapshot', () => {
             params: {
               text: ['Complete', 'Error'],
             },
-            page: context.getSelectedMcpPage(),
+            page: context.getSelectedBrowserPage(),
           },
           response,
           context,
@@ -108,7 +108,7 @@ describe('snapshot', () => {
     });
 
     it('should work with element that show up later', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const page = context.getSelectedPptrPage();
 
         const handlePromise = waitFor.handler(
@@ -116,7 +116,7 @@ describe('snapshot', () => {
             params: {
               text: ['Hello World'],
             },
-            page: context.getSelectedMcpPage(),
+            page: context.getSelectedBrowserPage(),
           },
           response,
           context,
@@ -136,7 +136,7 @@ describe('snapshot', () => {
       });
     });
     it('should work with aria elements', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const page = context.getSelectedPptrPage();
 
         await page.setContent(
@@ -148,7 +148,7 @@ describe('snapshot', () => {
             params: {
               text: ['Header'],
             },
-            page: context.getSelectedMcpPage(),
+            page: context.getSelectedBrowserPage(),
           },
           response,
           context,
@@ -163,7 +163,7 @@ describe('snapshot', () => {
     });
 
     it('should work with iframe content', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const page = context.getSelectedPptrPage();
 
         await page.setContent(
@@ -176,7 +176,7 @@ describe('snapshot', () => {
             params: {
               text: ['Hello iframe'],
             },
-            page: context.getSelectedMcpPage(),
+            page: context.getSelectedBrowserPage(),
           },
           response,
           context,

@@ -12,7 +12,7 @@ import {describe, it} from 'node:test';
 
 import {lighthouseAudit} from '../../src/tools/lighthouse.js';
 import {serverHooks} from '../server.js';
-import {html, withMcpContext} from '../utils.js';
+import {html, withBrowserContext} from '../utils.js';
 
 describe('lighthouse', () => {
   const server = serverHooks();
@@ -20,7 +20,7 @@ describe('lighthouse', () => {
     it('runs Lighthouse audit by default (navigation, desktop)', async () => {
       server.addHtmlRoute('/test', html`<div>Test</div>`);
 
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const page = context.getSelectedPptrPage();
         await page.goto(server.getRoute('/test'));
 
@@ -30,7 +30,7 @@ describe('lighthouse', () => {
               mode: 'navigation',
               device: 'desktop',
             },
-            page: context.getSelectedMcpPage(),
+            page: context.getSelectedBrowserPage(),
           },
           response,
           context,
@@ -55,7 +55,7 @@ describe('lighthouse', () => {
     it('restores emulation', async () => {
       server.addHtmlRoute('/test-mobile', html`<div>Test Mobile</div>`);
 
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const page = context.getSelectedPptrPage();
         await page.goto(server.getRoute('/test-mobile'));
         await context.emulate({
@@ -91,7 +91,7 @@ describe('lighthouse', () => {
               mode: 'snapshot',
               device: 'mobile',
             },
-            page: context.getSelectedMcpPage(),
+            page: context.getSelectedBrowserPage(),
           },
           response,
           context,
@@ -120,7 +120,7 @@ describe('lighthouse', () => {
     it('runs Lighthouse in snapshot mode with mobile device', async () => {
       server.addHtmlRoute('/test-mobile', html`<div>Test Mobile</div>`);
 
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const page = context.getSelectedPptrPage();
         await page.goto(server.getRoute('/test-mobile'));
 
@@ -130,7 +130,7 @@ describe('lighthouse', () => {
               mode: 'snapshot',
               device: 'mobile',
             },
-            page: context.getSelectedMcpPage(),
+            page: context.getSelectedBrowserPage(),
           },
           response,
           context,
@@ -155,7 +155,7 @@ describe('lighthouse', () => {
       );
 
       try {
-        await withMcpContext(async (response, context) => {
+        await withBrowserContext(async (response, context) => {
           const page = context.getSelectedPptrPage();
           await page.goto(server.getRoute('/test-mobile'));
 
@@ -166,7 +166,7 @@ describe('lighthouse', () => {
                 device: 'mobile',
                 outputDirPath: folderPath,
               },
-              page: context.getSelectedMcpPage(),
+              page: context.getSelectedBrowserPage(),
             },
             response,
             context,

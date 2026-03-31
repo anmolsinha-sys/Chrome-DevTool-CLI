@@ -1,0 +1,12 @@
+node_modules
+build
+.cache
+.git
+.github
+tests
+docs
+*.md
+.eslintcache
+.prettiercache
+package-lock.json
+npm-debug.log

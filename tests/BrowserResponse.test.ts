@@ -13,8 +13,8 @@ import {describe, it} from 'node:test';
 import sinon from 'sinon';
 
 import type {ParsedArguments} from '../src/bin/chrome-devtools-mcp-cli-options.js';
-import type {McpContext} from '../src/McpContext.js';
-import type {McpResponse} from '../src/McpResponse.js';
+import type {BrowserContext} from '../src/BrowserContext.js';
+import type {BrowserResponse} from '../src/BrowserResponse.js';
 import {
   closePage,
   listPages,
@@ -39,12 +39,12 @@ import {
   html,
   stabilizeResponseOutput,
   stabilizeStructuredContent,
-  withMcpContext,
+  withBrowserContext,
 } from './utils.js';
 
-describe('McpResponse', () => {
+describe('BrowserResponse', () => {
   it('list pages', async t => {
-    await withMcpContext(async (response, context) => {
+    await withBrowserContext(async (response, context) => {
       response.setIncludePages(true);
       const {content, structuredContent} = await response.handle(
         'test',
@@ -59,7 +59,7 @@ describe('McpResponse', () => {
   });
 
   it('allows response text lines to be added', async t => {
-    await withMcpContext(async (response, context) => {
+    await withBrowserContext(async (response, context) => {
       response.appendResponseLine('Testing 1');
       response.appendResponseLine('Testing 2');
       const {content, structuredContent} = await response.handle(
@@ -75,7 +75,7 @@ describe('McpResponse', () => {
   });
 
   it('does not include anything in response if snapshot is null', async t => {
-    await withMcpContext(async (response, context) => {
+    await withBrowserContext(async (response, context) => {
       const page = context.getSelectedPptrPage();
       page.accessibility.snapshot = async () => null;
       const {content, structuredContent} = await response.handle(
@@ -90,7 +90,7 @@ describe('McpResponse', () => {
   });
 
   it('returns correctly formatted snapshot for a simple tree', async t => {
-    await withMcpContext(async (response, context) => {
+    await withBrowserContext(async (response, context) => {
       const page = context.getSelectedPptrPage();
       await page.setContent(
         html`<button>Click me</button>
@@ -113,7 +113,7 @@ describe('McpResponse', () => {
   });
 
   it('returns values for textboxes', async t => {
-    await withMcpContext(async (response, context) => {
+    await withBrowserContext(async (response, context) => {
       const page = context.getSelectedPptrPage();
       await page.setContent(
         html`<label
@@ -137,7 +137,7 @@ describe('McpResponse', () => {
   });
 
   it('returns verbose snapshot and structured content', async t => {
-    await withMcpContext(async (response, context) => {
+    await withBrowserContext(async (response, context) => {
       const page = context.getSelectedPptrPage();
       await page.setContent(html`<aside>test</aside>`);
       response.includeSnapshot({
@@ -156,7 +156,7 @@ describe('McpResponse', () => {
   it('saves snapshot to file and returns structured content', async t => {
     const filePath = join(tmpdir(), 'test-screenshot.png');
     try {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const page = context.getSelectedPptrPage();
         await page.setContent(html`<aside>test</aside>`);
         response.includeSnapshot({
@@ -187,7 +187,7 @@ describe('McpResponse', () => {
   });
 
   it('preserves mapping ids across multiple snapshots', async () => {
-    await withMcpContext(async (response, context) => {
+    await withBrowserContext(async (response, context) => {
       const page = context.getSelectedPptrPage();
       await page.setContent(html`
         <div>
@@ -254,7 +254,7 @@ describe('McpResponse', () => {
     const server = serverHooks();
 
     it('resets ids after navigation', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         server.addHtmlRoute(
           '/page.html',
           html`
@@ -292,7 +292,7 @@ describe('McpResponse', () => {
   });
 
   it('adds throttling setting when it is not null', async t => {
-    await withMcpContext(async (response, context) => {
+    await withBrowserContext(async (response, context) => {
       await context.emulate({networkConditions: 'Slow 3G'});
       const {content, structuredContent} = await response.handle(
         'test',
@@ -307,7 +307,7 @@ describe('McpResponse', () => {
   });
 
   it('does not include throttling setting when it is null', async t => {
-    await withMcpContext(async (response, context) => {
+    await withBrowserContext(async (response, context) => {
       const {content, structuredContent} = await response.handle(
         'test',
         context,
@@ -320,7 +320,7 @@ describe('McpResponse', () => {
     });
   });
   it('adds image when image is attached', async t => {
-    await withMcpContext(async (response, context) => {
+    await withBrowserContext(async (response, context) => {
       response.attachImage({data: 'imageBase64', mimeType: 'image/png'});
       const {content, structuredContent} = await response.handle(
         'test',
@@ -337,7 +337,7 @@ describe('McpResponse', () => {
   });
 
   it('adds cpu throttling setting when it is over 1', async t => {
-    await withMcpContext(async (response, context) => {
+    await withBrowserContext(async (response, context) => {
       await context.emulate({cpuThrottlingRate: 4});
       const {content, structuredContent} = await response.handle(
         'test',
@@ -351,7 +351,7 @@ describe('McpResponse', () => {
   });
 
   it('does not include cpu throttling setting when it is 1', async t => {
-    await withMcpContext(async (response, context) => {
+    await withBrowserContext(async (response, context) => {
       await context.emulate({cpuThrottlingRate: 1});
       const {content, structuredContent} = await response.handle(
         'test',
@@ -365,7 +365,7 @@ describe('McpResponse', () => {
   });
 
   it('adds viewport emulation setting when it is set', async t => {
-    await withMcpContext(async (response, context) => {
+    await withBrowserContext(async (response, context) => {
       await context.emulate({
         viewport: {width: 400, height: 400, deviceScaleFactor: 1},
       });
@@ -381,7 +381,7 @@ describe('McpResponse', () => {
   });
 
   it('adds userAgent emulation setting when it is set', async t => {
-    await withMcpContext(async (response, context) => {
+    await withBrowserContext(async (response, context) => {
       await context.emulate({userAgent: 'MyUA'});
       const {content, structuredContent} = await response.handle(
         'test',
@@ -395,7 +395,7 @@ describe('McpResponse', () => {
   });
 
   it('adds color scheme emulation setting when it is set', async t => {
-    await withMcpContext(async (response, context) => {
+    await withBrowserContext(async (response, context) => {
       await context.emulate({colorScheme: 'dark'});
       const {content, structuredContent} = await response.handle(
         'test',
@@ -409,8 +409,8 @@ describe('McpResponse', () => {
   });
 
   it('adds a prompt dialog', async t => {
-    await withMcpContext(async (response, context) => {
-      const page = context.getSelectedMcpPage();
+    await withBrowserContext(async (response, context) => {
+      const page = context.getSelectedBrowserPage();
       const dialogPromise = new Promise<void>(resolve => {
         page.pptrPage.on('dialog', () => {
           resolve();
@@ -433,8 +433,8 @@ describe('McpResponse', () => {
   });
 
   it('adds an alert dialog', async t => {
-    await withMcpContext(async (response, context) => {
-      const page = context.getSelectedMcpPage();
+    await withBrowserContext(async (response, context) => {
+      const page = context.getSelectedBrowserPage();
       const dialogPromise = new Promise<void>(resolve => {
         page.pptrPage.on('dialog', () => {
           resolve();
@@ -457,7 +457,7 @@ describe('McpResponse', () => {
   });
 
   it('add network requests when setting is true', async t => {
-    await withMcpContext(async (response, context) => {
+    await withBrowserContext(async (response, context) => {
       response.setIncludeNetworkRequests(true);
       context.getNetworkRequests = () => {
         return [getMockRequest({stableId: 1}), getMockRequest({stableId: 2})];
@@ -474,7 +474,7 @@ describe('McpResponse', () => {
   });
 
   it('does not include network requests when setting is false', async t => {
-    await withMcpContext(async (response, context) => {
+    await withBrowserContext(async (response, context) => {
       response.setIncludeNetworkRequests(false);
       context.getNetworkRequests = () => {
         return [getMockRequest()];
@@ -491,7 +491,7 @@ describe('McpResponse', () => {
   });
 
   it('add network request when attached with POST data', async t => {
-    await withMcpContext(async (response, context) => {
+    await withBrowserContext(async (response, context) => {
       response.setIncludeNetworkRequests(true);
       const httpResponse = getMockResponse();
       httpResponse.buffer = () => {
@@ -529,7 +529,7 @@ describe('McpResponse', () => {
   });
 
   it('add network request when attached', async t => {
-    await withMcpContext(async (response, context) => {
+    await withBrowserContext(async (response, context) => {
       response.setIncludeNetworkRequests(true);
       const request = getMockRequest();
       context.getNetworkRequests = () => {
@@ -551,7 +551,7 @@ describe('McpResponse', () => {
   });
 
   it('adds console messages when the setting is true', async t => {
-    await withMcpContext(async (response, context) => {
+    await withBrowserContext(async (response, context) => {
       response.setIncludeConsoleData(true);
       const page = context.getSelectedPptrPage();
       const consoleMessagePromise = new Promise<void>(resolve => {
@@ -576,7 +576,7 @@ describe('McpResponse', () => {
   });
 
   it('adds a message when no console messages exist', async t => {
-    await withMcpContext(async (response, context) => {
+    await withBrowserContext(async (response, context) => {
       response.setIncludeConsoleData(true);
       const {content, structuredContent} = await response.handle(
         'test',
@@ -591,7 +591,7 @@ describe('McpResponse', () => {
   });
 
   it("doesn't list the issue message if mapping returns null", async t => {
-    await withMcpContext(async (response, context) => {
+    await withBrowserContext(async (response, context) => {
       const mockAggregatedIssue = getMockAggregatedIssue();
       const mockDescription = {
         file: 'not-existing-description-file.md',
@@ -616,7 +616,7 @@ describe('McpResponse', () => {
   });
 
   it('throws error if mapping returns null on get issue details', async () => {
-    await withMcpContext(async (response, context) => {
+    await withBrowserContext(async (response, context) => {
       const mockAggregatedIssue = getMockAggregatedIssue();
       const mockDescription = {
         file: 'not-existing-description-file.md',
@@ -637,9 +637,9 @@ describe('McpResponse', () => {
   });
 });
 
-describe('McpResponse network request filtering', () => {
+describe('BrowserResponse network request filtering', () => {
   it('filters network requests by resource type', async t => {
-    await withMcpContext(async (response, context) => {
+    await withBrowserContext(async (response, context) => {
       response.setIncludeNetworkRequests(true, {
         resourceTypes: ['script', 'stylesheet'],
       });
@@ -663,7 +663,7 @@ describe('McpResponse network request filtering', () => {
   });
 
   it('filters network requests by single resource type', async t => {
-    await withMcpContext(async (response, context) => {
+    await withBrowserContext(async (response, context) => {
       response.setIncludeNetworkRequests(true, {
         resourceTypes: ['image'],
       });
@@ -686,7 +686,7 @@ describe('McpResponse network request filtering', () => {
   });
 
   it('shows no requests when filter matches nothing', async t => {
-    await withMcpContext(async (response, context) => {
+    await withBrowserContext(async (response, context) => {
       response.setIncludeNetworkRequests(true, {
         resourceTypes: ['font'],
       });
@@ -709,7 +709,7 @@ describe('McpResponse network request filtering', () => {
   });
 
   it('shows all requests when no filters are provided', async t => {
-    await withMcpContext(async (response, context) => {
+    await withBrowserContext(async (response, context) => {
       response.setIncludeNetworkRequests(true);
       context.getNetworkRequests = () => {
         return [
@@ -733,7 +733,7 @@ describe('McpResponse network request filtering', () => {
   });
 
   it('shows all requests when empty resourceTypes array is provided', async t => {
-    await withMcpContext(async (response, context) => {
+    await withBrowserContext(async (response, context) => {
       response.setIncludeNetworkRequests(true, {
         resourceTypes: [],
       });
@@ -758,9 +758,9 @@ describe('McpResponse network request filtering', () => {
   });
 });
 
-describe('McpResponse network pagination', () => {
+describe('BrowserResponse network pagination', () => {
   it('returns all requests when pagination is not provided', async t => {
-    await withMcpContext(async (response, context) => {
+    await withBrowserContext(async (response, context) => {
       const requests = Array.from({length: 5}, () => getMockRequest());
       context.getNetworkRequests = () => requests;
       response.setIncludeNetworkRequests(true);
@@ -779,7 +779,7 @@ describe('McpResponse network pagination', () => {
   });
 
   it('returns first page by default', async t => {
-    await withMcpContext(async (response, context) => {
+    await withBrowserContext(async (response, context) => {
       const requests = Array.from({length: 30}, (_, idx) =>
         getMockRequest({method: `GET-${idx}`}),
       );
@@ -802,7 +802,7 @@ describe('McpResponse network pagination', () => {
   });
 
   it('returns subsequent page when pageIdx provided', async t => {
-    await withMcpContext(async (response, context) => {
+    await withBrowserContext(async (response, context) => {
       const requests = Array.from({length: 25}, (_, idx) =>
         getMockRequest({method: `GET-${idx}`}),
       );
@@ -826,7 +826,7 @@ describe('McpResponse network pagination', () => {
   });
 
   it('handles invalid page number by showing first page', async t => {
-    await withMcpContext(async (response, context) => {
+    await withBrowserContext(async (response, context) => {
       const requests = Array.from({length: 5}, () => getMockRequest());
       context.getNetworkRequests = () => requests;
       response.setIncludeNetworkRequests(true, {
@@ -856,7 +856,7 @@ describe('McpResponse network pagination', () => {
         throw new Error(result.error);
       }
 
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         response.attachTraceSummary(result);
         const {content, structuredContent} = await response.handle(
           'test',
@@ -886,7 +886,7 @@ describe('McpResponse network pagination', () => {
         throw new Error(result.error);
       }
 
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         response.attachTraceInsight(
           result,
           'NAVIGATION_0',
@@ -915,7 +915,7 @@ describe('McpResponse network pagination', () => {
         throw new Error(result.error);
       }
 
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         response.attachTraceInsight(
           result,
           'BAD_ID',
@@ -941,7 +941,7 @@ describe('McpResponse network pagination', () => {
 
 describe('extensions', () => {
   it('lists extensions', async t => {
-    await withMcpContext(async (response, context) => {
+    await withBrowserContext(async (response, context) => {
       response.setListExtensions();
       // Empty state testing
       const emptyResult = await response.handle('test', context);
@@ -983,7 +983,7 @@ describe('extensions', () => {
 
 describe('lighthouse', () => {
   it('includes lighthouse report paths', async t => {
-    await withMcpContext(async (response, context) => {
+    await withBrowserContext(async (response, context) => {
       const lighthouseResult = {
         summary: {
           mode: 'navigation',
@@ -1054,7 +1054,7 @@ describe('inPage tools', () => {
   }
 
   it('lists in-page tools', async t => {
-    await withMcpContext(
+    await withBrowserContext(
       async (response, context) => {
         response.setListInPageTools();
         const emptyResult = await response.handle('test', context);
@@ -1065,7 +1065,7 @@ describe('inPage tools', () => {
         );
 
         response.resetResponseLineForTesting();
-        const mcpPage = context.getSelectedMcpPage();
+        const mcpPage = context.getSelectedBrowserPage();
         stubToolDiscovery(mcpPage.pptrPage);
         sinon.stub(mcpPage.pptrPage, 'evaluate').resolves({
           name: 'My Tool Group',
@@ -1103,14 +1103,14 @@ describe('inPage tools', () => {
 
   async function testIncludesInPageTools(
     handlerAction: (
-      response: McpResponse,
-      context: McpContext,
+      response: BrowserResponse,
+      context: BrowserContext,
     ) => Promise<void>,
     toolName: string,
   ) {
-    await withMcpContext(
+    await withBrowserContext(
       async (response, context) => {
-        const mcpPage = context.getSelectedMcpPage();
+        const mcpPage = context.getSelectedBrowserPage();
         stubToolDiscovery(mcpPage.pptrPage);
 
         const initScript = `
@@ -1164,7 +1164,7 @@ describe('inPage tools', () => {
   it('includes in-page tools in select_page response', async () => {
     await testIncludesInPageTools(async (response, context) => {
       const pageId =
-        context.getPageId(context.getSelectedMcpPage().pptrPage) ?? 1;
+        context.getPageId(context.getSelectedBrowserPage().pptrPage) ?? 1;
       await selectPage.handler({params: {pageId}}, response, context);
     }, 'select_page');
   });
@@ -1172,7 +1172,7 @@ describe('inPage tools', () => {
   it('includes in-page tools in close_page response', async () => {
     await testIncludesInPageTools(async (response, context) => {
       const pageId =
-        context.getPageId(context.getSelectedMcpPage().pptrPage) ?? 1;
+        context.getPageId(context.getSelectedBrowserPage().pptrPage) ?? 1;
       await closePage.handler({params: {pageId}}, response, context);
     }, 'close_page');
   });
@@ -1182,7 +1182,7 @@ describe('inPage tools', () => {
       await navigatePage.handler(
         {
           params: {type: 'url', url: 'about:blank'},
-          page: context.getSelectedMcpPage(),
+          page: context.getSelectedBrowserPage(),
         },
         response,
         context,
@@ -1193,7 +1193,7 @@ describe('inPage tools', () => {
   it('includes in-page tools in new_page response', async () => {
     await testIncludesInPageTools(async (response, context) => {
       // Workaround to ensure the test environment's new page contain in-page tools
-      sinon.stub(context, 'newPage').resolves(context.getSelectedMcpPage());
+      sinon.stub(context, 'newPage').resolves(context.getSelectedBrowserPage());
 
       await newPage.handler(
         {

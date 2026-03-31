@@ -8,7 +8,7 @@
 
 import process from 'node:process';
 
-import type {Options, PositionalOptions} from 'yargs';
+import type { Options, PositionalOptions } from 'yargs';
 
 import {
   startDaemon,
@@ -16,13 +16,13 @@ import {
   sendCommand,
   handleResponse,
 } from '../daemon/client.js';
-import {isDaemonRunning, serializeArgs} from '../daemon/utils.js';
-import {logDisclaimers} from '../index.js';
-import {hideBin, yargs, type CallToolResult} from '../third_party/index.js';
-import {VERSION} from '../version.js';
+import { isDaemonRunning, serializeArgs } from '../daemon/utils.js';
+import { logDisclaimers } from '../index.js';
+import { hideBin, yargs, type CallToolResult } from '../third_party/index.js';
+import { VERSION } from '../version.js';
 
-import {commands} from './chrome-devtools-cli-options.js';
-import {cliOptions, parseArguments} from './chrome-devtools-mcp-cli-options.js';
+import { commands } from './chrome-devtools-cli-options.js';
+import { cliOptions, parseArguments } from './chrome-devtools-mcp-cli-options.js';
 
 async function start(args: string[]) {
   const combinedArgs = [...args, ...defaultArgs];
@@ -217,7 +217,7 @@ for (const [commandName, commandDef] of Object.entries(commands)) {
 
         const response = await sendCommand({
           method: 'invoke_tool',
-          tool: commandName,
+          tool: commandDef.originalName,
           args: commandArgs,
         });
 

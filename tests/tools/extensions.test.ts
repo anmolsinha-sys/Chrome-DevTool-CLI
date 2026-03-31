@@ -6,11 +6,11 @@
 
 import assert from 'node:assert';
 import path from 'node:path';
-import {afterEach, describe, it} from 'node:test';
+import { afterEach, describe, it } from 'node:test';
 
 import sinon from 'sinon';
 
-import type {ParsedArguments} from '../../src/bin/chrome-devtools-mcp-cli-options.js';
+import type { ParsedArguments } from '../../src/bin/chrome-devtools-mcp-cli-options.js';
 import {
   installExtension,
   uninstallExtension,
@@ -18,7 +18,7 @@ import {
   reloadExtension,
   triggerExtensionAction,
 } from '../../src/tools/extensions.js';
-import {extractExtensionId, withMcpContext} from '../utils.js';
+import { extractExtensionId, withBrowserContext } from '../utils.js';
 
 const EXTENSION_WITH_SW_PATH = path.join(
   import.meta.dirname,
@@ -35,10 +35,10 @@ describe('extension', () => {
   });
 
   it('installs and uninstalls an extension and verifies it in chrome://extensions', async () => {
-    await withMcpContext(async (response, context) => {
+    await withBrowserContext(async (response: any, context: any) => {
       // Install the extension
       await installExtension.handler(
-        {params: {path: EXTENSION_PATH}},
+        { params: { path: EXTENSION_PATH } },
         response,
         context,
       );
@@ -57,7 +57,7 @@ describe('extension', () => {
 
       // Uninstall the extension
       await uninstallExtension.handler(
-        {params: {id: extensionId!}},
+        { params: { id: extensionId! } },
         response,
         context,
       );
@@ -81,9 +81,9 @@ describe('extension', () => {
     });
   });
   it('lists installed extensions', async () => {
-    await withMcpContext(async (response, context) => {
+    await withBrowserContext(async (response: any, context: any) => {
       const setListExtensionsSpy = sinon.spy(response, 'setListExtensions');
-      await listExtensions.handler({params: {}}, response, context);
+      await listExtensions.handler({ params: {} }, response, context);
       assert.ok(
         setListExtensionsSpy.calledOnce,
         'setListExtensions should be called',
@@ -91,9 +91,9 @@ describe('extension', () => {
     });
   });
   it('reloads an extension', async () => {
-    await withMcpContext(async (response, context) => {
+    await withBrowserContext(async (response: any, context: any) => {
       await installExtension.handler(
-        {params: {path: EXTENSION_PATH}},
+        { params: { path: EXTENSION_PATH } },
         response,
         context,
       );
@@ -103,7 +103,7 @@ describe('extension', () => {
       response.resetResponseLineForTesting();
 
       await reloadExtension.handler(
-        {params: {id: extensionId!}},
+        { params: { id: extensionId! } },
         response,
         context,
       );
@@ -120,12 +120,12 @@ describe('extension', () => {
 
       const list = context.listExtensions();
       assert.ok(list.length === 1, 'List should have only one extension');
-      const reinstalled = list.find(e => e.id === extensionId);
+      const reinstalled = list.find((e: any) => e.id === extensionId);
       assert.ok(reinstalled, 'Extension should be present after reload');
     });
   });
   it('triggers an extension action', async () => {
-    await withMcpContext(
+    await withBrowserContext(
       async (response, context) => {
         const extensionId = await context.installExtension(
           EXTENSION_WITH_SW_PATH,
@@ -138,7 +138,7 @@ describe('extension', () => {
         assert.ok(!pageTargetBefore, 'Page should not exist before action');
 
         await triggerExtensionAction.handler(
-          {params: {id: extensionId}},
+          { params: { id: extensionId } },
           response,
           context,
         );

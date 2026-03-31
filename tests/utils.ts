@@ -6,10 +6,10 @@
 
 import assert from 'node:assert';
 
-import type {CallToolResult} from '@modelcontextprotocol/sdk/types.js';
+import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import logger from 'debug';
-import type {Browser} from 'puppeteer';
-import puppeteer, {Locator} from 'puppeteer';
+import type { Browser } from 'puppeteer';
+import puppeteer, { Locator } from 'puppeteer';
 import type {
   Frame,
   HTTPRequest,
@@ -19,11 +19,11 @@ import type {
 } from 'puppeteer-core';
 import sinon from 'sinon';
 
-import type {ParsedArguments} from '../src/bin/chrome-devtools-mcp-cli-options.js';
-import {McpContext} from '../src/McpContext.js';
-import {McpResponse} from '../src/McpResponse.js';
-import {stableIdSymbol} from '../src/PageCollector.js';
-import {DevTools} from '../src/third_party/index.js';
+import type { ParsedArguments } from '../src/bin/chrome-devtools-mcp-cli-options.js';
+import { BrowserContext } from '../src/BrowserContext.js';
+import { BrowserResponse } from '../src/BrowserResponse.js';
+import { stableIdSymbol } from '../src/PageCollector.js';
+import { DevTools } from '../src/third_party/index.js';
 
 export function getTextContent(
   content: CallToolResult['content'][number],
@@ -39,12 +39,12 @@ export function getImageContent(content: CallToolResult['content'][number]): {
   mimeType: string;
 } {
   if (content.type === 'image') {
-    return {data: content.data, mimeType: content.mimeType};
+    return { data: content.data, mimeType: content.mimeType };
   }
   throw new Error(`Expected image content but got ${content.type}`);
 }
 
-export function extractExtensionId(response: McpResponse) {
+export function extractExtensionId(response: BrowserResponse) {
   const responseLine = response.responseLines[0];
   assert.ok(responseLine, 'Response should not be empty');
   const match = responseLine.match(/Extension installed\. Id: (.+)/);
@@ -54,7 +54,7 @@ export function extractExtensionId(response: McpResponse) {
 }
 
 const browsers = new Map<string, Browser>();
-let context: McpContext | undefined;
+let context: BrowserContext | undefined;
 
 export async function withBrowser(
   cb: (browser: Browser, page: Page) => Promise<void>,
@@ -95,8 +95,8 @@ export async function withBrowser(
   await cb(browser, newPage);
 }
 
-export async function withMcpContext(
-  cb: (response: McpResponse, context: McpContext) => Promise<void>,
+export async function withBrowserContext(
+  cb: (response: BrowserResponse, context: BrowserContext) => Promise<void>,
   options: {
     debug?: boolean;
     autoOpenDevTools?: boolean;
@@ -106,11 +106,11 @@ export async function withMcpContext(
   args: ParsedArguments = {} as ParsedArguments,
 ) {
   await withBrowser(async browser => {
-    const response = new McpResponse(args);
+    const response = new BrowserResponse(args);
     if (context) {
       context.dispose();
     }
-    context = await McpContext.from(
+    context = await BrowserContext.from(
       browser,
       logger('test'),
       {
@@ -120,7 +120,7 @@ export async function withMcpContext(
       Locator,
     );
 
-    response.setPage(context.getSelectedMcpPage());
+    response.setPage(context.getSelectedBrowserPage());
 
     await cb(response, context);
   }, options);
@@ -308,7 +308,7 @@ export function getMockPage(): Page {
     send: () => {
       // no-op
     },
-    target: () => ({_targetId: '<mock target ID>'}),
+    target: () => ({ _targetId: '<mock target ID>' }),
   };
   return {
     mainFrame() {

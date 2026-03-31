@@ -9,14 +9,14 @@ import {before, describe, it} from 'node:test';
 
 import type {ParsedArguments} from '../../src/bin/chrome-devtools-mcp-cli-options.js';
 import {loadIssueDescriptions} from '../../src/issue-descriptions.js';
-import {McpResponse} from '../../src/McpResponse.js';
+import {BrowserResponse} from '../../src/BrowserResponse.js';
 import {DevTools} from '../../src/third_party/index.js';
 import {
   getConsoleMessage,
   listConsoleMessages,
 } from '../../src/tools/console.js';
 import {serverHooks} from '../server.js';
-import {getTextContent, withMcpContext} from '../utils.js';
+import {getTextContent, withBrowserContext} from '../utils.js';
 
 describe('console', () => {
   before(async () => {
@@ -24,9 +24,9 @@ describe('console', () => {
   });
   describe('list_console_messages', () => {
     it('list messages', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         await listConsoleMessages.handler(
-          {params: {}, page: context.getSelectedMcpPage()},
+          {params: {}, page: context.getSelectedBrowserPage()},
           response,
           context,
         );
@@ -35,13 +35,13 @@ describe('console', () => {
     });
 
     it('lists error messages', async () => {
-      await withMcpContext(async (response, context) => {
-        const page = context.getSelectedMcpPage();
+      await withBrowserContext(async (response, context) => {
+        const page = context.getSelectedBrowserPage();
         await page.pptrPage.setContent(
           '<script>console.error("This is an error")</script>',
         );
         await listConsoleMessages.handler(
-          {params: {}, page: context.getSelectedMcpPage()},
+          {params: {}, page: context.getSelectedBrowserPage()},
           response,
           context,
         );
@@ -52,13 +52,13 @@ describe('console', () => {
     });
 
     it('lists error objects', async t => {
-      await withMcpContext(async (response, context) => {
-        const page = context.getSelectedMcpPage();
+      await withBrowserContext(async (response, context) => {
+        const page = context.getSelectedBrowserPage();
         await page.pptrPage.setContent(
           '<script>console.error(new Error("This is an error"))</script>',
         );
         await listConsoleMessages.handler(
-          {params: {}, page: context.getSelectedMcpPage()},
+          {params: {}, page: context.getSelectedBrowserPage()},
           response,
           context,
         );
@@ -69,11 +69,11 @@ describe('console', () => {
     });
 
     it('work with primitive unhandled errors', async () => {
-      await withMcpContext(async (response, context) => {
-        const page = context.getSelectedMcpPage();
+      await withBrowserContext(async (response, context) => {
+        const page = context.getSelectedBrowserPage();
         await page.pptrPage.setContent('<script>throw undefined;</script>');
         await listConsoleMessages.handler(
-          {params: {}, page: context.getSelectedMcpPage()},
+          {params: {}, page: context.getSelectedBrowserPage()},
           response,
           context,
         );
@@ -85,8 +85,8 @@ describe('console', () => {
 
     describe('issues', () => {
       it('lists issues', async () => {
-        await withMcpContext(async (response, context) => {
-          const page = context.getSelectedMcpPage();
+        await withBrowserContext(async (response, context) => {
+          const page = context.getSelectedBrowserPage();
           const issuePromise = new Promise<void>(resolve => {
             page.pptrPage.once('issue', () => {
               resolve();
@@ -97,7 +97,7 @@ describe('console', () => {
           );
           await issuePromise;
           await listConsoleMessages.handler(
-            {params: {}, page: context.getSelectedMcpPage()},
+            {params: {}, page: context.getSelectedBrowserPage()},
             response,
             context,
           );
@@ -112,7 +112,7 @@ describe('console', () => {
       });
 
       it('lists issues after a page reload', async () => {
-        await withMcpContext(async (response, context) => {
+        await withBrowserContext(async (response, context) => {
           const page = await context.newPage();
           response.setPage(page);
           const issuePromise = new Promise<void>(resolve => {
@@ -126,7 +126,7 @@ describe('console', () => {
           );
           await issuePromise;
           await listConsoleMessages.handler(
-            {params: {}, page: context.getSelectedMcpPage()},
+            {params: {}, page: context.getSelectedBrowserPage()},
             response,
             context,
           );
@@ -168,19 +168,19 @@ describe('console', () => {
     const server = serverHooks();
 
     it('gets a specific console message', async () => {
-      await withMcpContext(async (response, context) => {
-        const page = context.getSelectedMcpPage();
+      await withBrowserContext(async (response, context) => {
+        const page = context.getSelectedBrowserPage();
         await page.pptrPage.setContent(
           '<script>console.error("This is an error")</script>',
         );
         // The list is needed to populate the console messages in the context.
         await listConsoleMessages.handler(
-          {params: {}, page: context.getSelectedMcpPage()},
+          {params: {}, page: context.getSelectedBrowserPage()},
           response,
           context,
         );
         await getConsoleMessage.handler(
-          {params: {msgid: 1}, page: context.getSelectedMcpPage()},
+          {params: {msgid: 1}, page: context.getSelectedBrowserPage()},
           response,
           context,
         );
@@ -195,8 +195,8 @@ describe('console', () => {
 
     describe('issues type', () => {
       it('gets issue details with node id parsing', async t => {
-        await withMcpContext(async (response, context) => {
-          const page = context.getSelectedMcpPage();
+        await withBrowserContext(async (response, context) => {
+          const page = context.getSelectedBrowserPage();
           const issuePromise = new Promise<void>(resolve => {
             page.pptrPage.once('issue', () => {
               resolve();
@@ -208,14 +208,14 @@ describe('console', () => {
           await context.createTextSnapshot(page);
           await issuePromise;
           await listConsoleMessages.handler(
-            {params: {}, page: context.getSelectedMcpPage()},
+            {params: {}, page: context.getSelectedBrowserPage()},
             response,
             context,
           );
-          const response2 = new McpResponse({} as ParsedArguments);
-          response2.setPage(context.getSelectedMcpPage());
+          const response2 = new BrowserResponse({} as ParsedArguments);
+          response2.setPage(context.getSelectedBrowserPage());
           await getConsoleMessage.handler(
-            {params: {msgid: 1}, page: context.getSelectedMcpPage()},
+            {params: {msgid: 1}, page: context.getSelectedBrowserPage()},
             response2,
             context,
           );
@@ -230,8 +230,8 @@ describe('console', () => {
           res.end(JSON.stringify({data: 'test data'}));
         });
 
-        await withMcpContext(async (response, context) => {
-          const page = context.getSelectedMcpPage();
+        await withBrowserContext(async (response, context) => {
+          const page = context.getSelectedBrowserPage();
           const issuePromise = new Promise<void>(resolve => {
             page.pptrPage.once('issue', () => {
               resolve();
@@ -264,14 +264,14 @@ describe('console', () => {
           const id = context.getConsoleMessageStableId(issueMsg);
           assert.ok(id);
           await listConsoleMessages.handler(
-            {params: {types: ['issue']}, page: context.getSelectedMcpPage()},
+            {params: {types: ['issue']}, page: context.getSelectedBrowserPage()},
             response,
             context,
           );
-          const response2 = new McpResponse({} as ParsedArguments);
-          response2.setPage(context.getSelectedMcpPage());
+          const response2 = new BrowserResponse({} as ParsedArguments);
+          response2.setPage(context.getSelectedBrowserPage());
           await getConsoleMessage.handler(
-            {params: {msgid: id}, page: context.getSelectedMcpPage()},
+            {params: {msgid: id}, page: context.getSelectedBrowserPage()},
             response2,
             context,
           );
@@ -299,12 +299,12 @@ describe('console', () => {
         `<script src="${server.getRoute('/main.min.js')}"></script>`,
       );
 
-      await withMcpContext(async (response, context) => {
-        const page = context.getSelectedMcpPage();
+      await withBrowserContext(async (response, context) => {
+        const page = context.getSelectedBrowserPage();
         await page.pptrPage.goto(server.getRoute('/index.html'));
 
         await getConsoleMessage.handler(
-          {params: {msgid: 1}, page: context.getSelectedMcpPage()},
+          {params: {msgid: 1}, page: context.getSelectedBrowserPage()},
           response,
           context,
         );
@@ -328,12 +328,12 @@ describe('console', () => {
         `<script src="${server.getRoute('/main.min.js')}"></script>`,
       );
 
-      await withMcpContext(async (response, context) => {
-        const page = context.getSelectedMcpPage();
+      await withBrowserContext(async (response, context) => {
+        const page = context.getSelectedBrowserPage();
         await page.pptrPage.goto(server.getRoute('/index.html'));
 
         await getConsoleMessage.handler(
-          {params: {msgid: 1}, page: context.getSelectedMcpPage()},
+          {params: {msgid: 1}, page: context.getSelectedBrowserPage()},
           response,
           context,
         );
@@ -357,12 +357,12 @@ describe('console', () => {
         `<script src="${server.getRoute('/main.min.js')}"></script>`,
       );
 
-      await withMcpContext(async (response, context) => {
-        const page = context.getSelectedMcpPage();
+      await withBrowserContext(async (response, context) => {
+        const page = context.getSelectedBrowserPage();
         await page.pptrPage.goto(server.getRoute('/index.html'));
 
         await getConsoleMessage.handler(
-          {params: {msgid: 1}, page: context.getSelectedMcpPage()},
+          {params: {msgid: 1}, page: context.getSelectedBrowserPage()},
           response,
           context,
         );
@@ -386,12 +386,12 @@ describe('console', () => {
         `<script src="${server.getRoute('/main.min.js')}"></script>`,
       );
 
-      await withMcpContext(async (response, context) => {
-        const page = context.getSelectedMcpPage();
+      await withBrowserContext(async (response, context) => {
+        const page = context.getSelectedBrowserPage();
         await page.pptrPage.goto(server.getRoute('/index.html'));
 
         await getConsoleMessage.handler(
-          {params: {msgid: 1}, page: context.getSelectedMcpPage()},
+          {params: {msgid: 1}, page: context.getSelectedBrowserPage()},
           response,
           context,
         );
@@ -415,12 +415,12 @@ describe('console', () => {
         `<script src="${server.getRoute('/main.min.js')}"></script>`,
       );
 
-      await withMcpContext(async (response, context) => {
-        const page = context.getSelectedMcpPage();
+      await withBrowserContext(async (response, context) => {
+        const page = context.getSelectedBrowserPage();
         await page.pptrPage.goto(server.getRoute('/index.html'));
 
         await getConsoleMessage.handler(
-          {params: {msgid: 1}, page: context.getSelectedMcpPage()},
+          {params: {msgid: 1}, page: context.getSelectedBrowserPage()},
           response,
           context,
         );
@@ -458,12 +458,12 @@ describe('console', () => {
         `,
       );
 
-      await withMcpContext(async (response, context) => {
-        const page = context.getSelectedMcpPage();
+      await withBrowserContext(async (response, context) => {
+        const page = context.getSelectedBrowserPage();
         await page.pptrPage.goto(server.getRoute('/index.html'));
 
         await getConsoleMessage.handler(
-          {params: {msgid: 1}, page: context.getSelectedMcpPage()},
+          {params: {msgid: 1}, page: context.getSelectedBrowserPage()},
           response,
           context,
         );

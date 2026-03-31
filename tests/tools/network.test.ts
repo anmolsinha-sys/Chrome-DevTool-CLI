@@ -16,16 +16,16 @@ import {
   getTextContent,
   html,
   stabilizeResponseOutput,
-  withMcpContext,
+  withBrowserContext,
 } from '../utils.js';
 
 describe('network', () => {
   const server = serverHooks();
   describe('network_list_requests', () => {
     it('list requests', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         await listNetworkRequests.handler(
-          {params: {}, page: context.getSelectedMcpPage()},
+          {params: {}, page: context.getSelectedBrowserPage()},
           response,
           context,
         );
@@ -39,7 +39,7 @@ describe('network', () => {
       server.addHtmlRoute('/two', html`<main>Second</main>`);
       server.addHtmlRoute('/three', html`<main>Third</main>`);
 
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         await context.setUpNetworkCollectorForTesting();
         const page = context.getSelectedPptrPage();
         await page.goto(server.getRoute('/one'));
@@ -49,7 +49,7 @@ describe('network', () => {
           {
             params: {},
 
-            page: context.getSelectedMcpPage(),
+            page: context.getSelectedBrowserPage(),
           },
           response,
           context,
@@ -66,7 +66,7 @@ describe('network', () => {
       server.addHtmlRoute('/two', html`<main>Second</main>`);
       server.addHtmlRoute('/three', html`<main>Third</main>`);
 
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         await context.setUpNetworkCollectorForTesting();
         const page = context.getSelectedPptrPage();
         await page.goto(server.getRoute('/one'));
@@ -77,7 +77,7 @@ describe('network', () => {
             params: {
               includePreservedRequests: true,
             },
-            page: context.getSelectedMcpPage(),
+            page: context.getSelectedBrowserPage(),
           },
           response,
           context,
@@ -109,7 +109,7 @@ describe('network', () => {
         html`<main>I was redirected 2 times</main>`,
       );
 
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         await context.setUpNetworkCollectorForTesting();
         const page = context.getSelectedPptrPage();
         await page.goto(server.getRoute('/redirect'), {
@@ -120,7 +120,7 @@ describe('network', () => {
             params: {
               includePreservedRequests: true,
             },
-            page: context.getSelectedMcpPage(),
+            page: context.getSelectedBrowserPage(),
           },
           response,
           context,
@@ -134,11 +134,11 @@ describe('network', () => {
   });
   describe('network_get_request', () => {
     it('attaches request', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const page = context.getSelectedPptrPage();
         await page.goto('data:text/html,<div>Hello MCP</div>');
         await getNetworkRequest.handler(
-          {params: {reqid: 1}, page: context.getSelectedMcpPage()},
+          {params: {reqid: 1}, page: context.getSelectedBrowserPage()},
           response,
           context,
         );
@@ -147,11 +147,11 @@ describe('network', () => {
       });
     });
     it('should not add the request list', async () => {
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         const page = context.getSelectedPptrPage();
         await page.goto('data:text/html,<div>Hello MCP</div>');
         await getNetworkRequest.handler(
-          {params: {reqid: 1}, page: context.getSelectedMcpPage()},
+          {params: {reqid: 1}, page: context.getSelectedBrowserPage()},
           response,
           context,
         );
@@ -163,7 +163,7 @@ describe('network', () => {
       server.addHtmlRoute('/two', html`<main>Second</main>`);
       server.addHtmlRoute('/three', html`<main>Third</main>`);
 
-      await withMcpContext(async (response, context) => {
+      await withBrowserContext(async (response, context) => {
         await context.setUpNetworkCollectorForTesting();
         const page = context.getSelectedPptrPage();
         await page.goto(server.getRoute('/one'));
@@ -174,7 +174,7 @@ describe('network', () => {
             params: {
               reqid: 1,
             },
-            page: context.getSelectedMcpPage(),
+            page: context.getSelectedBrowserPage(),
           },
           response,
           context,
