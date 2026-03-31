@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {logger} from '../logger.js';
-import type {CdpPage, Dialog} from '../third_party/index.js';
-import {zod} from '../third_party/index.js';
+import { logger } from '../logger.js';
+import type { CdpPage, Dialog } from '../third_party/index.js';
+import { zod } from '../third_party/index.js';
 
-import {ToolCategory} from './categories.js';
+import { ToolCategory } from './categories.js';
 import {
   CLOSE_PAGE_ERROR,
   definePageTool,
@@ -108,12 +108,16 @@ export const newPage = defineTool({
       .optional()
       .describe(
         'If specified, the page is created in an isolated browser context with the given name. ' +
-          'Pages in the same browser context share cookies and storage. ' +
-          'Pages in different browser contexts are fully isolated.',
+        'Pages in the same browser context share cookies and storage. ' +
+        'Pages in different browser contexts are fully isolated.',
       ),
     ...timeoutSchema,
   },
   handler: async (request, response, context) => {
+    let url = request.params.url;
+    if (url && !url.includes('://') && !url.startsWith('about:') && !url.startsWith('data:')) {
+      url = `https://${url}`;
+    }
     const page = await context.newPage(
       request.params.background,
       request.params.isolatedContext,
@@ -121,11 +125,11 @@ export const newPage = defineTool({
 
     await context.waitForEventsAfterAction(
       async () => {
-        await page.pptrPage.goto(request.params.url, {
+        await page.pptrPage.goto(url, {
           timeout: request.params.timeout,
         });
       },
-      {timeout: request.params.timeout},
+      { timeout: request.params.timeout },
     );
 
     response.setIncludePages(true);
@@ -197,7 +201,7 @@ export const navigatePage = definePageTool({
 
     let initScriptId: string | undefined;
     if (request.params.initScript) {
-      const {identifier} = await page.pptrPage.evaluateOnNewDocument(
+      const { identifier } = await page.pptrPage.evaluateOnNewDocument(
         request.params.initScript,
       );
       initScriptId = identifier;
@@ -209,16 +213,20 @@ export const navigatePage = definePageTool({
       await context.waitForEventsAfterAction(
         async () => {
           switch (request.params.type) {
-            case 'url':
-              if (!request.params.url) {
+            case 'url': {
+              let url = request.params.url;
+              if (!url) {
                 throw new Error(
                   'A URL is required for navigation of type=url.',
                 );
               }
+              if (!url.includes('://') && !url.startsWith('about:') && !url.startsWith('data:')) {
+                url = `https://${url}`;
+              }
               try {
-                await page.pptrPage.goto(request.params.url, options);
+                await page.pptrPage.goto(url, options);
                 response.appendResponseLine(
-                  `Successfully navigated to ${request.params.url}.`,
+                  `Successfully navigated to ${url}.`,
                 );
               } catch (error) {
                 response.appendResponseLine(
@@ -226,6 +234,7 @@ export const navigatePage = definePageTool({
                 );
               }
               break;
+            }
             case 'back':
               try {
                 await page.pptrPage.goBack(options);
@@ -265,7 +274,7 @@ export const navigatePage = definePageTool({
               break;
           }
         },
-        {timeout: request.params.timeout},
+        { timeout: request.params.timeout },
       );
     } finally {
       page.pptrPage.off('dialog', dialogHandler);
@@ -305,10 +314,10 @@ export const resizePage = definePageTool({
 
       if (bounds.windowState === 'fullscreen') {
         // Have to call this twice on Ubuntu when the window is in fullscreen mode.
-        await browser.setWindowBounds(windowId, {windowState: 'normal'});
-        await browser.setWindowBounds(windowId, {windowState: 'normal'});
+        await browser.setWindowBounds(windowId, { windowState: 'normal' });
+        await browser.setWindowBounds(windowId, { windowState: 'normal' });
       } else if (bounds.windowState !== 'normal') {
-        await browser.setWindowBounds(windowId, {windowState: 'normal'});
+        await browser.setWindowBounds(windowId, { windowState: 'normal' });
       }
     } catch {
       // Window APIs are not supported on all platforms
