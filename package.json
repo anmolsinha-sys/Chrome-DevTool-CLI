@@ -1,6 +1,6 @@
 {
   "name": "devtool-chrome-cli",
-  "version": "0.20.4",
+  "version": "0.20.5",
   "description": "Standalone CLI and MCP server for Chrome DevTools browser automation",
   "type": "module",
   "bin": {
