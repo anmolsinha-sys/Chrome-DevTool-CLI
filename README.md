@@ -1,24 +1,27 @@
-# Chrome DevTools MCP
+# Chrome DevTool CLI
 
-[![npm chrome-devtools-mcp package](https://img.shields.io/npm/v/chrome-devtools-mcp.svg)](https://npmjs.org/package/chrome-devtools-mcp)
+A standalone CLI and MCP server for Chrome DevTools browser automation.
 
-`chrome-devtools-mcp` lets your coding agent (such as Gemini, Claude, Cursor or Copilot)
-control and inspect a live Chrome browser. It acts as a Model-Context-Protocol
-(MCP) server, giving your AI coding assistant access to the full power of
-Chrome DevTools for reliable automation, in-depth debugging, and performance analysis.
+## 🚀 Quick Start (NPX)
 
-## [Tool reference](./docs/tool-reference.md) | [Changelog](./CHANGELOG.md) | [Contributing](./CONTRIBUTING.md) | [Troubleshooting](./docs/troubleshooting.md) | [Design Principles](./docs/design-principles.md)
+Once published, you can use the CLI directly via `npx`:
 
-## Key features
+```bash
+npx chrome-devtool-cli open --url https://example.com
+npx chrome-devtool-cli screenshot
+npx chrome-devtool-cli ls
+```
 
-- **Get performance insights**: Uses [Chrome
-  DevTools](https://github.com/ChromeDevTools/devtools-frontend) to record
-  traces and extract actionable performance insights.
-- **Advanced browser debugging**: Analyze network requests, take screenshots and
-  check browser console messages (with source-mapped stack traces).
-- **Reliable automation**. Uses
-  [puppeteer](https://github.com/puppeteer/puppeteer) to automate actions in
-  Chrome and automatically wait for action results.
+> [!NOTE]
+> If you are running locally without publishing, use:
+> `node build/src/bin/chrome-devtools.js <command>`
+
+## Key Features
+
+- **Standalone CLI**: Optimized for shell scripts and terminal usage.
+- **Friendly Aliases**: `open`, `screenshot`, `ls`, `type`, `press`, etc.
+- **Generic Architecture**: Use the core automation logic without MCP overhead.
+- **Persistence**: A background daemon handles session state across commands.
 
 ## Disclaimers
 
