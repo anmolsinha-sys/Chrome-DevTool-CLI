@@ -26,6 +26,7 @@ function main(): void {
 
   // Create i18n mock
   const i18nDir = path.join(BUILD_DIR, devtoolsFrontEndCorePath, 'i18n');
+  fs.mkdirSync(i18nDir, { recursive: true });
   const localesFile = path.join(i18nDir, 'locales.js');
   const localesContent = `
 export const LOCALES = [
@@ -49,14 +50,14 @@ export const LOCAL_FETCH_PATTERN = './locales/@LOCALE@.json';`;
     devtoolsThirdPartyPath,
     'codemirror.next',
   );
-  fs.mkdirSync(codeMirrorDir, {recursive: true});
+  fs.mkdirSync(codeMirrorDir, { recursive: true });
   const codeMirrorFile = path.join(codeMirrorDir, 'codemirror.next.js');
   const codeMirrorContent = `export default {}`;
   writeFile(codeMirrorFile, codeMirrorContent);
 
   // Create root mock
   const rootDir = path.join(BUILD_DIR, devtoolsFrontEndCorePath, 'root');
-  fs.mkdirSync(rootDir, {recursive: true});
+  fs.mkdirSync(rootDir, { recursive: true });
   const runtimeFile = path.join(rootDir, 'Runtime.js');
   const runtimeContent = `
 export function getChromeVersion() { return ''; };
@@ -94,6 +95,20 @@ export const ExperimentName = {
   writeFile(runtimeFile, runtimeContent);
 
   copyDevToolsDescriptionFiles();
+  setExecutablePermissions();
+}
+
+function setExecutablePermissions(): void {
+  const binDir = path.join(BUILD_DIR, 'src', 'bin');
+  if (fs.existsSync(binDir)) {
+    const files = fs.readdirSync(binDir);
+    for (const file of files) {
+      if (file.endsWith('.js')) {
+        const filePath = path.join(binDir, file);
+        fs.chmodSync(filePath, 0o755);
+      }
+    }
+  }
 }
 
 function copyDevToolsDescriptionFiles() {
@@ -106,7 +121,7 @@ function copyDevToolsDescriptionFiles() {
     'third_party',
     'issue-descriptions',
   );
-  fs.cpSync(sourceDir, destDir, {recursive: true});
+  fs.cpSync(sourceDir, destDir, { recursive: true });
 }
 
 main();
