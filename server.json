@@ -4,16 +4,16 @@
   "title": "Chrome DevTools MCP",
   "description": "MCP server for Chrome DevTools",
   "repository": {
-    "url": "https://github.com/ChromeDevTools/chrome-devtools-mcp",
+    "url": "https://github.com/anmolsinha-sys/Chrome-DevTool-CLI",
     "source": "github"
   },
-  "version": "0.20.3",
+  "version": "0.20.4",
   "packages": [
     {
       "registryType": "npm",
       "registryBaseUrl": "https://registry.npmjs.org",
       "identifier": "chrome-devtools-mcp",
-      "version": "0.20.3",
+      "version": "0.20.4",
       "transport": {
         "type": "stdio"
       },

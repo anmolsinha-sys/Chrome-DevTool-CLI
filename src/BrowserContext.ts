@@ -7,16 +7,16 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-import type { TargetUniverse } from './DevtoolsUtils.js';
-import { UniverseManager } from './DevtoolsUtils.js';
-import { BrowserPage } from './BrowserPage.js';
+import {BrowserPage} from './BrowserPage.js';
+import type {TargetUniverse} from './DevtoolsUtils.js';
+import {UniverseManager} from './DevtoolsUtils.js';
 import {
   NetworkCollector,
   ConsoleCollector,
   type ListenerMap,
   type UncaughtError,
 } from './PageCollector.js';
-import type { DevTools } from './third_party/index.js';
+import type {DevTools} from './third_party/index.js';
 import type {
   Browser,
   BrowserContext as PptrBrowserContext,
@@ -29,12 +29,12 @@ import type {
   Viewport,
   Target,
 } from './third_party/index.js';
-import { Locator } from './third_party/index.js';
-import { PredefinedNetworkConditions } from './third_party/index.js';
-import { listPages } from './tools/pages.js';
-import { CLOSE_PAGE_ERROR } from './tools/ToolDefinition.js';
-import type { Context, DevToolsData } from './tools/ToolDefinition.js';
-import type { TraceResult } from './trace-processing/parse.js';
+import {Locator} from './third_party/index.js';
+import {PredefinedNetworkConditions} from './third_party/index.js';
+import {listPages} from './tools/pages.js';
+import {CLOSE_PAGE_ERROR} from './tools/ToolDefinition.js';
+import type {Context, DevToolsData} from './tools/ToolDefinition.js';
+import type {TraceResult} from './trace-processing/parse.js';
 import type {
   EmulationSettings,
   GeolocationOptions,
@@ -46,8 +46,8 @@ import {
   ExtensionRegistry,
   type InstalledExtension,
 } from './utils/ExtensionRegistry.js';
-import { saveTemporaryFile } from './utils/files.js';
-import { WaitForHelper } from './WaitForHelper.js';
+import {saveTemporaryFile} from './utils/files.js';
+import {WaitForHelper} from './WaitForHelper.js';
 
 interface BrowserContextOptions {
   // Whether the DevTools windows are exposed as pages for debugging of DevTools.
@@ -98,7 +98,7 @@ export class BrowserContext implements Context {
   #extensionRegistry = new ExtensionRegistry();
 
   #isRunningTrace = false;
-  #screenRecorderData: { recorder: ScreenRecorder; filePath: string } | null =
+  #screenRecorderData: {recorder: ScreenRecorder; filePath: string} | null =
     null;
 
   #nextPageId = 1;
@@ -176,7 +176,10 @@ export class BrowserContext implements Context {
     return context;
   }
 
-  resolveCdpRequestId(page: BrowserPage, cdpRequestId: string): number | undefined {
+  resolveCdpRequestId(
+    page: BrowserPage,
+    cdpRequestId: string,
+  ): number | undefined {
     if (!cdpRequestId) {
       this.logger('no network request');
       return;
@@ -269,7 +272,7 @@ export class BrowserContext implements Context {
       }
       page = await ctx.newPage();
     } else {
-      page = await this.browser.newPage({ background });
+      page = await this.browser.newPage({background});
     }
     await this.createPagesSnapshot();
     this.selectPage(this.#getBrowserPage(page));
@@ -286,7 +289,7 @@ export class BrowserContext implements Context {
       page.dispose();
       this.#browserPages.delete(page.pptrPage);
     }
-    await page.pptrPage.close({ runBeforeUnload: false });
+    await page.pptrPage.close({runBeforeUnload: false});
   }
 
   getNetworkRequestById(page: BrowserPage, reqid: number): HTTPRequest {
@@ -311,7 +314,7 @@ export class BrowserContext implements Context {
   ): Promise<void> {
     const page = targetPage ?? this.getSelectedPptrPage();
     const browserPage = this.#getBrowserPage(page);
-    const newSettings: EmulationSettings = { ...browserPage.emulationSettings };
+    const newSettings: EmulationSettings = {...browserPage.emulationSettings};
 
     if (!options.networkConditions) {
       await page.emulateNetworkConditions(null);
@@ -327,7 +330,7 @@ export class BrowserContext implements Context {
     } else if (options.networkConditions in PredefinedNetworkConditions) {
       const networkCondition =
         PredefinedNetworkConditions[
-        options.networkConditions as keyof typeof PredefinedNetworkConditions
+          options.networkConditions as keyof typeof PredefinedNetworkConditions
         ];
       await page.emulateNetworkConditions(networkCondition);
       newSettings.networkConditions = options.networkConditions;
@@ -342,7 +345,7 @@ export class BrowserContext implements Context {
     }
 
     if (!options.geolocation) {
-      await page.setGeolocation({ latitude: 0, longitude: 0 });
+      await page.setGeolocation({latitude: 0, longitude: 0});
       delete newSettings.geolocation;
     } else {
       await page.setGeolocation(options.geolocation);
@@ -350,21 +353,21 @@ export class BrowserContext implements Context {
     }
 
     if (!options.userAgent) {
-      await page.setUserAgent({ userAgent: undefined });
+      await page.setUserAgent({userAgent: undefined});
       delete newSettings.userAgent;
     } else {
-      await page.setUserAgent({ userAgent: options.userAgent });
+      await page.setUserAgent({userAgent: options.userAgent});
       newSettings.userAgent = options.userAgent;
     }
 
     if (!options.colorScheme || options.colorScheme === 'auto') {
       await page.emulateMediaFeatures([
-        { name: 'prefers-color-scheme', value: '' },
+        {name: 'prefers-color-scheme', value: ''},
       ]);
       delete newSettings.colorScheme;
     } else {
       await page.emulateMediaFeatures([
-        { name: 'prefers-color-scheme', value: options.colorScheme },
+        {name: 'prefers-color-scheme', value: options.colorScheme},
       ]);
       newSettings.colorScheme = options.colorScheme;
     }
@@ -379,7 +382,7 @@ export class BrowserContext implements Context {
         hasTouch: false,
         isLandscape: false,
       };
-      const viewport = { ...defaults, ...options.viewport };
+      const viewport = {...defaults, ...options.viewport};
       await page.setViewport(viewport);
       newSettings.viewport = viewport;
     }
@@ -399,12 +402,12 @@ export class BrowserContext implements Context {
     return this.#isRunningTrace;
   }
 
-  getScreenRecorder(): { recorder: ScreenRecorder; filePath: string } | null {
+  getScreenRecorder(): {recorder: ScreenRecorder; filePath: string} | null {
     return this.#screenRecorderData;
   }
 
   setScreenRecorder(
-    data: { recorder: ScreenRecorder; filePath: string } | null,
+    data: {recorder: ScreenRecorder; filePath: string} | null,
   ): void {
     this.#screenRecorderData = data;
   }
@@ -432,7 +435,9 @@ export class BrowserContext implements Context {
   }
 
   getPageById(pageId: number): BrowserPage {
-    const page = this.#browserPages.values().find(browserPage => browserPage.id === pageId);
+    const page = this.#browserPages
+      .values()
+      .find(browserPage => browserPage.id === pageId);
     if (!page) {
       throw new Error('No page found');
     }
@@ -530,7 +535,7 @@ export class BrowserContext implements Context {
   }
 
   async createPagesSnapshot(): Promise<Page[]> {
-    const { pages: allPages, isolatedContextNames } = await this.#getAllPages();
+    const {pages: allPages, isolatedContextNames} = await this.#getAllPages();
 
     for (const page of allPages) {
       let browserPage = this.#browserPages.get(page);
@@ -640,12 +645,12 @@ export class BrowserContext implements Context {
       }
     }
 
-    return { pages: allPages, isolatedContextNames };
+    return {pages: allPages, isolatedContextNames};
   }
 
   async detectOpenDevToolsWindows() {
     this.logger('Detecting open DevTools windows');
-    const { pages } = await this.#getAllPages();
+    const {pages} = await this.#getAllPages();
 
     await Promise.all(
       pages.map(async page => {
@@ -700,7 +705,7 @@ export class BrowserContext implements Context {
         this.logger('No DevTools page detected');
         return {};
       }
-      const { cdpRequestId, cdpBackendNodeId } = await devtoolsPage.evaluate(
+      const {cdpRequestId, cdpBackendNodeId} = await devtoolsPage.evaluate(
         async () => {
           // @ts-expect-error no types
           const UI = await import('/bundled/ui/legacy/legacy.js');
@@ -718,7 +723,7 @@ export class BrowserContext implements Context {
           };
         },
       );
-      return { cdpBackendNodeId, cdpRequestId };
+      return {cdpBackendNodeId, cdpRequestId};
     } catch (err) {
       this.logger('error getting devtools data', err);
     }
@@ -741,7 +746,7 @@ export class BrowserContext implements Context {
       return;
     }
 
-    const { uniqueBackendNodeIdToMcpId } = page;
+    const {uniqueBackendNodeIdToMcpId} = page;
 
     const snapshotId = this.#nextSnapshotId++;
     // Iterate through the whole accessibility node tree and assign node ids that
@@ -813,21 +818,21 @@ export class BrowserContext implements Context {
   async saveTemporaryFile(
     data: Uint8Array<ArrayBufferLike>,
     filename: string,
-  ): Promise<{ filepath: string }> {
+  ): Promise<{filepath: string}> {
     return await saveTemporaryFile(data, filename);
   }
   async saveFile(
     data: Uint8Array<ArrayBufferLike>,
     filename: string,
-  ): Promise<{ filename: string }> {
+  ): Promise<{filename: string}> {
     try {
       const filePath = path.resolve(filename);
-      await fs.mkdir(path.dirname(filePath), { recursive: true });
+      await fs.mkdir(path.dirname(filePath), {recursive: true});
       await fs.writeFile(filePath, data);
-      return { filename: filePath };
+      return {filename: filePath};
     } catch (err) {
       this.logger(err);
-      throw new Error('Could not save a file', { cause: err });
+      throw new Error('Could not save a file', {cause: err});
     }
   }
 
@@ -851,7 +856,7 @@ export class BrowserContext implements Context {
 
   waitForEventsAfterAction(
     action: () => Promise<unknown>,
-    options?: { timeout?: number },
+    options?: {timeout?: number},
   ): Promise<void> {
     const page = this.#getSelectedBrowserPage();
     const cpuMultiplier = page.cpuThrottlingRate;
@@ -908,7 +913,7 @@ export class BrowserContext implements Context {
         },
       } as ListenerMap;
     });
-    const { pages } = await this.#getAllPages();
+    const {pages} = await this.#getAllPages();
     await this.#networkCollector.init(pages);
   }
 

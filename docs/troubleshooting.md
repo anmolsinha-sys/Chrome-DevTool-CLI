@@ -8,7 +8,7 @@
   auto-accept installation prompt.
 - Find a specific error in the output of the `chrome-devtools-mcp` server.
   Usually, if your client is an IDE, logs would be in the Output pane.
-- Search the [GitHub repository issues and discussions](https://github.com/ChromeDevTools/chrome-devtools-mcp) for help or existing similar problems.
+- Search the [GitHub repository issues and discussions](https://github.com/anmolsinha-sys/Chrome-DevTool-CLI) for help or existing similar problems.
 
 ## Debugging
 
@@ -136,7 +136,7 @@ with a timeout error if your environment cannot reach `github.com` on port 443
 ```
 Failed to download/cache plugin chrome-devtools-mcp: Failed to clone repository:
   Cloning into '...'...
-  fatal: unable to access 'https://github.com/ChromeDevTools/chrome-devtools-mcp.git/':
+  fatal: unable to access 'https://github.com/anmolsinha-sys/Chrome-DevTool-CLI.git/':
   Failed to connect to github.com port 443
 ```
 

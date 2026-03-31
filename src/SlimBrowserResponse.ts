@@ -9,8 +9,8 @@ import type {
   ImageContent,
 } from '@modelcontextprotocol/sdk/types.js';
 
-import type { BrowserContext } from './BrowserContext.js';
-import { BrowserResponse } from './BrowserResponse.js';
+import type {BrowserContext} from './BrowserContext.js';
+import {BrowserResponse} from './BrowserResponse.js';
 
 export class SlimBrowserResponse extends BrowserResponse {
   override async handle(

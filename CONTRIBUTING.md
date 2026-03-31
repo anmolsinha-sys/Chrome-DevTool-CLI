@@ -56,7 +56,7 @@ completed:
 ### Release process
 
 Releasing `chrome-devtools-mcp` is automated by GitHub Actions. To release a new
-version, [search for a PR titled `chore(main): release chrome-devtools-mcp`](https://github.com/ChromeDevTools/chrome-devtools-mcp/pulls?q=is%3Apr+is%3Aopen+%22chore%28main%29%3A+release+chrome-devtools-mcp%22)
+version, [search for a PR titled `chore(main): release chrome-devtools-mcp`](https://github.com/anmolsinha-sys/Chrome-DevTool-CLI/pulls?q=is%3Apr+is%3Aopen+%22chore%28main%29%3A+release+chrome-devtools-mcp%22)
 and review, test, and land it. The release PR is automatically opened if there
 are any changes on the main branch that show up in the changelog.
 
@@ -65,7 +65,7 @@ are any changes on the main branch that show up in the changelog.
 Check that you are using node version specified in .nvmrc, then run following commands:
 
 ```sh
-git clone https://github.com/ChromeDevTools/chrome-devtools-mcp.git
+git clone https://github.com/anmolsinha-sys/Chrome-DevTool-CLI.git
 cd chrome-devtools-mcp
 npm ci
 npm run build
@@ -148,4 +148,4 @@ export const scenario: TestScenario = {
 - no .nullable(), no .object() types.
 - represent complex object as a short formatted string.
 
-TODO: implement eslint for schema https://github.com/ChromeDevTools/chrome-devtools-mcp/issues/1076
+TODO: implement eslint for schema https://github.com/anmolsinha-sys/Chrome-DevTool-CLI/issues/1076

@@ -6,10 +6,10 @@
 
 import assert from 'node:assert';
 
-import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import type {CallToolResult} from '@modelcontextprotocol/sdk/types.js';
 import logger from 'debug';
-import type { Browser } from 'puppeteer';
-import puppeteer, { Locator } from 'puppeteer';
+import type {Browser} from 'puppeteer';
+import puppeteer, {Locator} from 'puppeteer';
 import type {
   Frame,
   HTTPRequest,
@@ -19,11 +19,11 @@ import type {
 } from 'puppeteer-core';
 import sinon from 'sinon';
 
-import type { ParsedArguments } from '../src/bin/chrome-devtools-mcp-cli-options.js';
-import { BrowserContext } from '../src/BrowserContext.js';
-import { BrowserResponse } from '../src/BrowserResponse.js';
-import { stableIdSymbol } from '../src/PageCollector.js';
-import { DevTools } from '../src/third_party/index.js';
+import type {ParsedArguments} from '../src/bin/chrome-devtools-mcp-cli-options.js';
+import {BrowserContext} from '../src/BrowserContext.js';
+import {BrowserResponse} from '../src/BrowserResponse.js';
+import {stableIdSymbol} from '../src/PageCollector.js';
+import {DevTools} from '../src/third_party/index.js';
 
 export function getTextContent(
   content: CallToolResult['content'][number],
@@ -39,7 +39,7 @@ export function getImageContent(content: CallToolResult['content'][number]): {
   mimeType: string;
 } {
   if (content.type === 'image') {
-    return { data: content.data, mimeType: content.mimeType };
+    return {data: content.data, mimeType: content.mimeType};
   }
   throw new Error(`Expected image content but got ${content.type}`);
 }
@@ -308,7 +308,7 @@ export function getMockPage(): Page {
     send: () => {
       // no-op
     },
-    target: () => ({ _targetId: '<mock target ID>' }),
+    target: () => ({_targetId: '<mock target ID>'}),
   };
   return {
     mainFrame() {

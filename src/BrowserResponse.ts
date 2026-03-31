@@ -4,15 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { ParsedArguments } from './bin/chrome-devtools-mcp-cli-options.js';
-import { ConsoleFormatter } from './formatters/ConsoleFormatter.js';
-import { IssueFormatter } from './formatters/IssueFormatter.js';
-import { NetworkFormatter } from './formatters/NetworkFormatter.js';
-import { SnapshotFormatter } from './formatters/SnapshotFormatter.js';
-import type { BrowserContext } from './BrowserContext.js';
-import type { BrowserPage } from './BrowserPage.js';
-import { UncaughtError } from './PageCollector.js';
-import { DevTools, type Protocol } from './third_party/index.js';
+import type {ParsedArguments} from './bin/chrome-devtools-mcp-cli-options.js';
+import type {BrowserContext} from './BrowserContext.js';
+import type {BrowserPage} from './BrowserPage.js';
+import {ConsoleFormatter} from './formatters/ConsoleFormatter.js';
+import {IssueFormatter} from './formatters/IssueFormatter.js';
+import {NetworkFormatter} from './formatters/NetworkFormatter.js';
+import {SnapshotFormatter} from './formatters/SnapshotFormatter.js';
+import {UncaughtError} from './PageCollector.js';
+import {DevTools, type Protocol} from './third_party/index.js';
 import type {
   ConsoleMessage,
   ImageContent,
@@ -20,8 +20,8 @@ import type {
   ResourceType,
   TextContent,
 } from './third_party/index.js';
-import type { ToolGroup, ToolDefinition } from './tools/inPage.js';
-import { handleDialog } from './tools/pages.js';
+import type {ToolGroup, ToolDefinition} from './tools/inPage.js';
+import {handleDialog} from './tools/pages.js';
 import type {
   DevToolsData,
   ImageContentData,
@@ -29,11 +29,11 @@ import type {
   Response,
   SnapshotParams,
 } from './tools/ToolDefinition.js';
-import type { InsightName, TraceResult } from './trace-processing/parse.js';
-import { getInsightOutput, getTraceSummary } from './trace-processing/parse.js';
-import type { InstalledExtension } from './utils/ExtensionRegistry.js';
-import { paginate } from './utils/pagination.js';
-import type { PaginationOptions } from './utils/types.js';
+import type {InsightName, TraceResult} from './trace-processing/parse.js';
+import {getInsightOutput, getTraceSummary} from './trace-processing/parse.js';
+import type {InstalledExtension} from './utils/ExtensionRegistry.js';
+import {paginate} from './utils/pagination.js';
+import type {PaginationOptions} from './utils/types.js';
 
 interface TraceInsightData {
   trace: TraceResult;
@@ -48,7 +48,7 @@ async function getToolGroup(
   const windowHandle = await page.pptrPage.evaluateHandle(() => window);
   // @ts-expect-error internal API
   const client = page.pptrPage._client();
-  const { listeners }: { listeners: Protocol.DOMDebugger.EventListener[] } =
+  const {listeners}: {listeners: Protocol.DOMDebugger.EventListener[]} =
     await client.send('DOMDebugger.getEventListeners', {
       objectId: windowHandle.remoteObject().objectId,
     });
@@ -189,9 +189,9 @@ export class BrowserResponse implements Response {
       pagination:
         options?.pageSize || options?.pageIdx
           ? {
-            pageSize: options.pageSize,
-            pageIdx: options.pageIdx,
-          }
+              pageSize: options.pageSize,
+              pageIdx: options.pageIdx,
+            }
           : undefined,
       resourceTypes: options?.resourceTypes,
       includePreservedRequests: options?.includePreservedRequests,
@@ -216,9 +216,9 @@ export class BrowserResponse implements Response {
       pagination:
         options?.pageSize || options?.pageIdx
           ? {
-            pageSize: options.pageSize,
-            pageIdx: options.pageIdx,
-          }
+              pageSize: options.pageSize,
+              pageIdx: options.pageIdx,
+            }
           : undefined,
       types: options?.types,
       includePreservedMessages: options?.includePreservedMessages,
@@ -227,7 +227,7 @@ export class BrowserResponse implements Response {
 
   attachNetworkRequest(
     reqId: number,
-    options?: { requestFilePath?: string; responseFilePath?: string },
+    options?: {requestFilePath?: string; responseFilePath?: string},
   ): void {
     this.#attachedNetworkRequestId = reqId;
     this.#attachedNetworkRequestOptions = options;
@@ -545,7 +545,7 @@ export class BrowserResponse implements Response {
       lighthouseResult?: LighthouseData;
       inPageTools?: ToolGroup<ToolDefinition>;
     },
-  ): { content: Array<TextContent | ImageContent>; structuredContent: object } {
+  ): {content: Array<TextContent | ImageContent>; structuredContent: object} {
     const structuredContent: {
       snapshot?: object;
       snapshotFilePath?: string;
@@ -555,7 +555,7 @@ export class BrowserResponse implements Response {
       consoleMessage?: object;
       consoleMessages?: object[];
       traceSummary?: string;
-      traceInsights?: Array<{ insightName: string; insightKey: string }>;
+      traceInsights?: Array<{insightName: string; insightKey: string}>;
       lighthouseResult?: object;
       extensions?: object[];
       inPageTools?: object;
@@ -635,8 +635,8 @@ Call ${handleDialog.name} to handle it before continuing.`);
     if (this.#includePages) {
       const allPages = context.getPages();
 
-      const { regularPages, extensionPages } = allPages.reduce(
-        (acc: { regularPages: Page[]; extensionPages: Page[] }, page: Page) => {
+      const {regularPages, extensionPages} = allPages.reduce(
+        (acc: {regularPages: Page[]; extensionPages: Page[]}, page: Page) => {
           if (page.url().startsWith('chrome-extension://')) {
             acc.extensionPages.push(page);
           } else {
@@ -644,7 +644,7 @@ Call ${handleDialog.name} to handle it before continuing.`);
           }
           return acc;
         },
-        { regularPages: [], extensionPages: [] },
+        {regularPages: [], extensionPages: []},
       );
 
       if (regularPages.length) {
@@ -737,7 +737,7 @@ Call ${handleDialog.name} to handle it before continuing.`);
 
     if (data.lighthouseResult) {
       structuredContent.lighthouseResult = data.lighthouseResult;
-      const { summary, reports } = data.lighthouseResult;
+      const {summary, reports} = data.lighthouseResult;
       response.push('## Lighthouse Audit Results');
       response.push(`Mode: ${summary.mode}`);
       response.push(`Device: ${summary.device}`);
@@ -885,7 +885,7 @@ Call ${handleDialog.name} to handle it before continuing.`);
       response.push('Invalid page number provided. Showing first page.');
     }
 
-    const { startIndex, endIndex, currentPage, totalPages } = paginationResult;
+    const {startIndex, endIndex, currentPage, totalPages} = paginationResult;
     response.push(
       `Showing ${startIndex + 1}-${endIndex} of ${data.length} (Page ${currentPage + 1} of ${totalPages}).`,
     );

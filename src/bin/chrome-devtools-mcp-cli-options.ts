@@ -24,7 +24,7 @@ export const cliOptions = {
   browserUrl: {
     type: 'string',
     description:
-      'Connect to a running, debuggable Chrome instance (e.g. `http://127.0.0.1:9222`). For more details see: https://github.com/ChromeDevTools/chrome-devtools-mcp#connecting-to-a-running-chrome-instance.',
+      'Connect to a running, debuggable Chrome instance (e.g. `http://127.0.0.1:9222`). For more details see: https://github.com/anmolsinha-sys/Chrome-DevTool-CLI#connecting-to-a-running-chrome-instance.',
     alias: 'u',
     conflicts: ['wsEndpoint', 'categoryExtensions'],
     coerce: (url: string | undefined) => {
@@ -332,7 +332,7 @@ export function parseArguments(version: string, argv = process.argv) {
       ],
       [
         '$0 --no-usage-statistics',
-        'Do not send usage statistics https://github.com/ChromeDevTools/chrome-devtools-mcp#usage-statistics.',
+        'Do not send usage statistics https://github.com/anmolsinha-sys/Chrome-DevTool-CLI#usage-statistics.',
       ],
       [
         '$0 --no-performance-crux',

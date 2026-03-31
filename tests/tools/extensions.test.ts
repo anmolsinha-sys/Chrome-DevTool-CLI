@@ -6,11 +6,13 @@
 
 import assert from 'node:assert';
 import path from 'node:path';
-import { afterEach, describe, it } from 'node:test';
+import {afterEach, describe, it} from 'node:test';
 
 import sinon from 'sinon';
 
-import type { ParsedArguments } from '../../src/bin/chrome-devtools-mcp-cli-options.js';
+import type {ParsedArguments} from '../../src/bin/chrome-devtools-mcp-cli-options.js';
+import type {BrowserContext} from '../../src/BrowserContext.js';
+import type {BrowserResponse} from '../../src/BrowserResponse.js';
 import {
   installExtension,
   uninstallExtension,
@@ -18,7 +20,7 @@ import {
   reloadExtension,
   triggerExtensionAction,
 } from '../../src/tools/extensions.js';
-import { extractExtensionId, withBrowserContext } from '../utils.js';
+import {extractExtensionId, withBrowserContext} from '../utils.js';
 
 const EXTENSION_WITH_SW_PATH = path.join(
   import.meta.dirname,
@@ -35,94 +37,102 @@ describe('extension', () => {
   });
 
   it('installs and uninstalls an extension and verifies it in chrome://extensions', async () => {
-    await withBrowserContext(async (response: any, context: any) => {
-      // Install the extension
-      await installExtension.handler(
-        { params: { path: EXTENSION_PATH } },
-        response,
-        context,
-      );
+    await withBrowserContext(
+      async (response: BrowserResponse, context: BrowserContext) => {
+        // Install the extension
+        await installExtension.handler(
+          {params: {path: EXTENSION_PATH}},
+          response,
+          context,
+        );
 
-      const extensionId = extractExtensionId(response);
-      const page = context.getSelectedPptrPage();
-      await page.goto('chrome://extensions');
+        const extensionId = extractExtensionId(response);
+        const page = context.getSelectedPptrPage();
+        await page.goto('chrome://extensions');
 
-      const element = await page.waitForSelector(
-        `extensions-manager >>> extensions-item[id="${extensionId}"]`,
-      );
-      assert.ok(
-        element,
-        `Extension with ID "${extensionId}" should be visible on chrome://extensions`,
-      );
+        const element = await page.waitForSelector(
+          `extensions-manager >>> extensions-item[id="${extensionId}"]`,
+        );
+        assert.ok(
+          element,
+          `Extension with ID "${extensionId}" should be visible on chrome://extensions`,
+        );
 
-      // Uninstall the extension
-      await uninstallExtension.handler(
-        { params: { id: extensionId! } },
-        response,
-        context,
-      );
+        // Uninstall the extension
+        await uninstallExtension.handler(
+          {params: {id: extensionId!}},
+          response,
+          context,
+        );
 
-      const uninstallResponseLine = response.responseLines[1];
-      assert.ok(
-        uninstallResponseLine.includes('Extension uninstalled'),
-        'Response should indicate uninstallation',
-      );
+        const uninstallResponseLine = response.responseLines[1];
+        assert.ok(
+          uninstallResponseLine.includes('Extension uninstalled'),
+          'Response should indicate uninstallation',
+        );
 
-      await page.waitForSelector('extensions-manager');
+        await page.waitForSelector('extensions-manager');
 
-      const elementAfterUninstall = await page.$(
-        `extensions-manager >>> extensions-item[id="${extensionId}"]`,
-      );
-      assert.strictEqual(
-        elementAfterUninstall,
-        null,
-        `Extension with ID "${extensionId}" should NOT be visible on chrome://extensions`,
-      );
-    });
+        const elementAfterUninstall = await page.$(
+          `extensions-manager >>> extensions-item[id="${extensionId}"]`,
+        );
+        assert.strictEqual(
+          elementAfterUninstall,
+          null,
+          `Extension with ID "${extensionId}" should NOT be visible on chrome://extensions`,
+        );
+      },
+    );
   });
   it('lists installed extensions', async () => {
-    await withBrowserContext(async (response: any, context: any) => {
-      const setListExtensionsSpy = sinon.spy(response, 'setListExtensions');
-      await listExtensions.handler({ params: {} }, response, context);
-      assert.ok(
-        setListExtensionsSpy.calledOnce,
-        'setListExtensions should be called',
-      );
-    });
+    await withBrowserContext(
+      async (response: BrowserResponse, context: BrowserContext) => {
+        const setListExtensionsSpy = sinon.spy(response, 'setListExtensions');
+        await listExtensions.handler({params: {}}, response, context);
+        assert.ok(
+          setListExtensionsSpy.calledOnce,
+          'setListExtensions should be called',
+        );
+      },
+    );
   });
   it('reloads an extension', async () => {
-    await withBrowserContext(async (response: any, context: any) => {
-      await installExtension.handler(
-        { params: { path: EXTENSION_PATH } },
-        response,
-        context,
-      );
+    await withBrowserContext(
+      async (response: BrowserResponse, context: BrowserContext) => {
+        await installExtension.handler(
+          {params: {path: EXTENSION_PATH}},
+          response,
+          context,
+        );
 
-      const extensionId = extractExtensionId(response);
-      const installSpy = sinon.spy(context, 'installExtension');
-      response.resetResponseLineForTesting();
+        const extensionId = extractExtensionId(response);
+        const installSpy = sinon.spy(context, 'installExtension');
+        response.resetResponseLineForTesting();
 
-      await reloadExtension.handler(
-        { params: { id: extensionId! } },
-        response,
-        context,
-      );
-      assert.ok(
-        installSpy.calledOnceWithExactly(EXTENSION_PATH),
-        'installExtension should be called with the extension path',
-      );
+        await reloadExtension.handler(
+          {params: {id: extensionId!}},
+          response,
+          context,
+        );
+        assert.ok(
+          installSpy.calledOnceWithExactly(EXTENSION_PATH),
+          'installExtension should be called with the extension path',
+        );
 
-      const reloadResponseLine = response.responseLines[0];
-      assert.ok(
-        reloadResponseLine.includes('Extension reloaded'),
-        'Response should indicate reload',
-      );
+        const reloadResponseLine = response.responseLines[0];
+        assert.ok(
+          reloadResponseLine.includes('Extension reloaded'),
+          'Response should indicate reload',
+        );
 
-      const list = context.listExtensions();
-      assert.ok(list.length === 1, 'List should have only one extension');
-      const reinstalled = list.find((e: any) => e.id === extensionId);
-      assert.ok(reinstalled, 'Extension should be present after reload');
-    });
+        const list = context.listExtensions();
+        assert.ok(list.length === 1, 'List should have only one extension');
+        const reinstalled = list.find(
+          (e: {id: string}) => e.id === extensionId,
+        );
+        assert.ok(reinstalled, 'Extension should be present after reload');
+      },
+    );
   });
   it('triggers an extension action', async () => {
     await withBrowserContext(
@@ -138,7 +148,7 @@ describe('extension', () => {
         assert.ok(!pageTargetBefore, 'Page should not exist before action');
 
         await triggerExtensionAction.handler(
-          { params: { id: extensionId } },
+          {params: {id: extensionId}},
           response,
           context,
         );

@@ -8,8 +8,8 @@ import assert from 'node:assert';
 import {before, describe, it} from 'node:test';
 
 import type {ParsedArguments} from '../../src/bin/chrome-devtools-mcp-cli-options.js';
-import {loadIssueDescriptions} from '../../src/issue-descriptions.js';
 import {BrowserResponse} from '../../src/BrowserResponse.js';
+import {loadIssueDescriptions} from '../../src/issue-descriptions.js';
 import {DevTools} from '../../src/third_party/index.js';
 import {
   getConsoleMessage,
@@ -264,7 +264,10 @@ describe('console', () => {
           const id = context.getConsoleMessageStableId(issueMsg);
           assert.ok(id);
           await listConsoleMessages.handler(
-            {params: {types: ['issue']}, page: context.getSelectedBrowserPage()},
+            {
+              params: {types: ['issue']},
+              page: context.getSelectedBrowserPage(),
+            },
             response,
             context,
           );

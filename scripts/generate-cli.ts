@@ -7,12 +7,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+import {Client} from '@modelcontextprotocol/sdk/client/index.js';
+import {StdioClientTransport} from '@modelcontextprotocol/sdk/client/stdio.js';
 
-import { parseArguments } from '../build/src/bin/chrome-devtools-mcp-cli-options.js';
-import { labels } from '../build/src/tools/categories.js';
-import { createTools } from '../build/src/tools/tools.js';
+import {parseArguments} from '../build/src/bin/chrome-devtools-mcp-cli-options.js';
+import {labels} from '../build/src/tools/categories.js';
+import {createTools} from '../build/src/tools/tools.js';
 
 const OUTPUT_PATH = path.join(
   import.meta.dirname,
@@ -45,7 +45,7 @@ async function fetchTools() {
   const transport = new StdioClientTransport({
     command: 'node',
     args: [serverPath],
-    env: { ...process.env, CHROME_DEVTOOLS_MCP_NO_USAGE_STATISTICS: 'true' },
+    env: {...process.env, CHROME_DEVTOOLS_MCP_NO_USAGE_STATISTICS: 'true'},
   });
 
   const client = new Client(
@@ -211,7 +211,7 @@ export type Commands = Record<
 export const commands: Commands = ${JSON.stringify(commands, null, 2)} as const;
 `);
 
-  fs.mkdirSync(path.dirname(OUTPUT_PATH), { recursive: true });
+  fs.mkdirSync(path.dirname(OUTPUT_PATH), {recursive: true});
   fs.writeFileSync(OUTPUT_PATH, lines.join(''));
   console.log(`Generated CLI at ${OUTPUT_PATH}`);
 }

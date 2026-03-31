@@ -7,10 +7,10 @@
 import assert from 'node:assert';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { describe, it } from 'node:test';
+import {describe, it} from 'node:test';
 
-import type { ParsedArguments } from '../../src/bin/chrome-devtools-mcp-cli-options.js';
-import { BrowserResponse } from '../../src/BrowserResponse.js';
+import type {ParsedArguments} from '../../src/bin/chrome-devtools-mcp-cli-options.js';
+import {BrowserResponse} from '../../src/BrowserResponse.js';
 import {
   click,
   hover,
@@ -22,9 +22,9 @@ import {
   clickAt,
   typeText,
 } from '../../src/tools/input.js';
-import { parseKey } from '../../src/utils/keyboard.js';
-import { serverHooks } from '../server.js';
-import { html, withBrowserContext } from '../utils.js';
+import {parseKey} from '../../src/utils/keyboard.js';
+import {serverHooks} from '../server.js';
+import {html, withBrowserContext} from '../utils.js';
 
 describe('input', () => {
   const server = serverHooks();
@@ -781,10 +781,13 @@ describe('input', () => {
           response.responseLines[0],
           `File uploaded from ${testFilePath}.`,
         );
-        const uploadedFileName = await page.$eval('#file-input', (el: any) => {
-          const input = el as HTMLInputElement;
-          return input.files?.[0]?.name;
-        });
+        const uploadedFileName = await page.$eval(
+          '#file-input',
+          (el: Element) => {
+            const input = el as HTMLInputElement;
+            return input.files?.[0]?.name;
+          },
+        );
         assert.strictEqual(uploadedFileName, 'test.txt');
 
         await fs.unlink(testFilePath);

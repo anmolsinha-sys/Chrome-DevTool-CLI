@@ -10,8 +10,8 @@ import type {
   Page,
   Viewport,
 } from './third_party/index.js';
-import { takeSnapshot } from './tools/snapshot.js';
-import type { ContextPage } from './tools/ToolDefinition.js';
+import {takeSnapshot} from './tools/snapshot.js';
+import type {ContextPage} from './tools/ToolDefinition.js';
 import type {
   EmulationSettings,
   GeolocationOptions,

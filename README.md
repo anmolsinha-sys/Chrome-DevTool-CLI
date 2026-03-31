@@ -152,7 +152,7 @@ claude mcp add chrome-devtools --scope user npx chrome-devtools-mcp@latest
 To install Chrome DevTools MCP with skills, add the marketplace registry in Claude Code:
 
 ```sh
-/plugin marketplace add ChromeDevTools/chrome-devtools-mcp
+/plugin marketplace add anmolsinha-sys/Chrome-DevTool-CLI
 ```
 
 Then, install the plugin:
@@ -252,13 +252,13 @@ with the standard config from above. You can also install the Chrome DevTools MC
 For macOS and Linux:
 
 ```bash
-code --add-mcp '{"name":"io.github.ChromeDevTools/chrome-devtools-mcp","command":"npx","args":["-y","chrome-devtools-mcp"],"env":{}}'
+code --add-mcp '{"name":"io.github.anmolsinha-sys/Chrome-DevTool-CLI","command":"npx","args":["-y","chrome-devtools-mcp"],"env":{}}'
 ```
 
 For Windows (PowerShell):
 
 ```powershell
-code --add-mcp '{"""name""":"""io.github.ChromeDevTools/chrome-devtools-mcp""","""command""":"""npx""","""args""":["""-y""","""chrome-devtools-mcp"""]}'
+code --add-mcp '{"""name""":"""io.github.anmolsinha-sys/Chrome-DevTool-CLI""","""command""":"""npx""","""args""":["""-y""","""chrome-devtools-mcp"""]}'
 ```
 
 </details>
@@ -296,7 +296,7 @@ Install the Chrome DevTools MCP server using the Gemini CLI.
 # Either MCP only:
 gemini mcp add chrome-devtools npx chrome-devtools-mcp@latest
 # Or as a Gemini extension (MCP+Skills):
-gemini extensions install --auto-update https://github.com/ChromeDevTools/chrome-devtools-mcp
+gemini extensions install --auto-update https://github.com/anmolsinha-sys/Chrome-DevTool-CLI
 ```
 
 **Globally:**
@@ -493,7 +493,7 @@ The Chrome DevTools MCP server supports the following configuration option:
   - **Default:** `false`
 
 - **`--browserUrl`/ `--browser-url`, `-u`**
-  Connect to a running, debuggable Chrome instance (e.g. `http://127.0.0.1:9222`). For more details see: https://github.com/ChromeDevTools/chrome-devtools-mcp#connecting-to-a-running-chrome-instance.
+  Connect to a running, debuggable Chrome instance (e.g. `http://127.0.0.1:9222`). For more details see: https://github.com/anmolsinha-sys/Chrome-DevTool-CLI#connecting-to-a-running-chrome-instance.
   - **Type:** string
 
 - **`--wsEndpoint`/ `--ws-endpoint`, `-w`**

@@ -4,16 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { logger } from '../logger.js';
-import type { BrowserContext } from '../BrowserContext.js';
-import { zod } from '../third_party/index.js';
-import type { ElementHandle, KeyInput } from '../third_party/index.js';
-import type { TextSnapshotNode } from '../types.js';
-import { parseKey } from '../utils/keyboard.js';
+import type {BrowserContext} from '../BrowserContext.js';
+import {logger} from '../logger.js';
+import {zod} from '../third_party/index.js';
+import type {ElementHandle, KeyInput} from '../third_party/index.js';
+import type {TextSnapshotNode} from '../types.js';
+import {parseKey} from '../utils/keyboard.js';
 
-import { ToolCategory } from './categories.js';
-import type { ContextPage } from './ToolDefinition.js';
-import { definePageTool } from './ToolDefinition.js';
+import {ToolCategory} from './categories.js';
+import type {ContextPage} from './ToolDefinition.js';
+import {definePageTool} from './ToolDefinition.js';
 
 const dblClickSchema = zod
   .boolean()
@@ -365,7 +365,7 @@ export const uploadFile = definePageTool({
     includeSnapshot: includeSnapshotSchema,
   },
   handler: async (request, response) => {
-    const { uid, filePath } = request.params;
+    const {uid, filePath} = request.params;
     const handle = (await request.page.getElementByUid(
       uid,
     )) as ElementHandle<HTMLInputElement>;
@@ -378,7 +378,7 @@ export const uploadFile = definePageTool({
         // Page.waitForFileChooser() and upload the file this way.
         try {
           const [fileChooser] = await Promise.all([
-            request.page.pptrPage.waitForFileChooser({ timeout: 3000 }),
+            request.page.pptrPage.waitForFileChooser({timeout: 3000}),
             handle.asLocator().click(),
           ]);
           await fileChooser.accept([filePath]);

@@ -6,12 +6,12 @@
 
 import assert from 'node:assert';
 import path from 'node:path';
-import { afterEach, describe, it } from 'node:test';
+import {afterEach, describe, it} from 'node:test';
 
-import type { Dialog } from 'puppeteer-core';
+import type {Dialog, Target} from 'puppeteer-core';
 import sinon from 'sinon';
 
-import type { ParsedArguments } from '../../src/bin/chrome-devtools-mcp-cli-options.js';
+import type {ParsedArguments} from '../../src/bin/chrome-devtools-mcp-cli-options.js';
 import {
   listPages,
   newPage,
@@ -22,7 +22,7 @@ import {
   handleDialog,
   getTabId,
 } from '../../src/tools/pages.js';
-import { html, withBrowserContext } from '../utils.js';
+import {html, withBrowserContext} from '../utils.js';
 
 const EXTENSION_SW_PATH = path.join(
   import.meta.dirname,
@@ -45,7 +45,7 @@ describe('pages', () => {
   describe('list_pages', () => {
     it('list pages', async () => {
       await withBrowserContext(async (response, context) => {
-        await listPages().handler({ params: {} }, response, context);
+        await listPages().handler({params: {}}, response, context);
         assert.ok(response.includePages);
       });
     });
@@ -59,7 +59,7 @@ describe('pages', () => {
         await page2.pptrPage.close();
 
         // list_pages should still work even though the selected page is gone.
-        await listPages().handler({ params: {} }, response, context);
+        await listPages().handler({params: {}}, response, context);
         assert.ok(response.includePages);
       });
     });
@@ -73,14 +73,15 @@ describe('pages', () => {
           await context.triggerExtensionAction(extensionId);
 
           const _popupTarget = await context.browser.waitForTarget(
-            (t: any) => t.type() === 'page' && t.url().includes('chrome-extension://'),
+            (t: Target) =>
+              t.type() === 'page' && t.url().includes('chrome-extension://'),
           );
 
           response.resetResponseLineForTesting();
           const listPageDef = listPages({
             categoryExtensions: true,
           } as ParsedArguments);
-          await listPageDef.handler({ params: {} }, response, context);
+          await listPageDef.handler({params: {}}, response, context);
 
           const result = await response.handle(listPageDef.name, context);
           const textContent = result.content.find(c => c.type === 'text') as {
@@ -113,7 +114,7 @@ describe('pages', () => {
             assert.ok(extensionId);
 
             const swTarget = await context.browser.waitForTarget(
-              (target: any) =>
+              (target: Target) =>
                 target.type() === 'service_worker' &&
                 target.url().includes('chrome-extension://'),
             );
@@ -122,7 +123,7 @@ describe('pages', () => {
             const listPageDef = listPages({
               categoryExtensions,
             } as ParsedArguments);
-            await listPageDef.handler({ params: {} }, response, context);
+            await listPageDef.handler({params: {}}, response, context);
 
             const result = await response.handle(listPageDef.name, context);
             const textContent = result.content.find(c => c.type === 'text') as {
@@ -133,7 +134,7 @@ describe('pages', () => {
 
             if (categoryExtensions) {
               const structured = result.structuredContent as {
-                extensionServiceWorkers: Array<{ url: string }>;
+                extensionServiceWorkers: Array<{url: string}>;
               };
               assert.deepStrictEqual(
                 structured.extensionServiceWorkers.map(sw => sw.url),
@@ -173,13 +174,13 @@ describe('pages', () => {
 
           // Wait for service worker used in the snapshot.
           await context.browser.waitForTarget(
-            (target: any) => target.type() === 'service_worker',
+            (target: Target) => target.type() === 'service_worker',
           );
 
           const listPageDef = listPages({
             categoryExtensions: true,
           } as ParsedArguments);
-          await listPageDef.handler({ params: {} }, response, context);
+          await listPageDef.handler({params: {}}, response, context);
 
           const result = await response.handle(listPageDef.name, context);
           const textContent = result.content.find(c => c.type === 'text') as {
@@ -211,7 +212,7 @@ describe('pages', () => {
           context.getSelectedBrowserPage(),
         );
         await newPage.handler(
-          { params: { url: 'about:blank' } },
+          {params: {url: 'about:blank'}},
           response,
           context,
         );
@@ -233,7 +234,7 @@ describe('pages', () => {
           true,
         );
         await newPage.handler(
-          { params: { url: 'about:blank', background: true } },
+          {params: {url: 'about:blank', background: true}},
           response,
           context,
         );
@@ -254,7 +255,7 @@ describe('pages', () => {
     it('creates a page in an isolated context', async () => {
       await withBrowserContext(async (response, context) => {
         await newPage.handler(
-          { params: { url: 'about:blank', isolatedContext: 'session-a' } },
+          {params: {url: 'about:blank', isolatedContext: 'session-a'}},
           response,
           context,
         );
@@ -267,13 +268,13 @@ describe('pages', () => {
     it('reuses the same context for the same isolatedContext name', async () => {
       await withBrowserContext(async (response, context) => {
         await newPage.handler(
-          { params: { url: 'about:blank', isolatedContext: 'session-a' } },
+          {params: {url: 'about:blank', isolatedContext: 'session-a'}},
           response,
           context,
         );
         const page1 = context.getSelectedPptrPage();
         await newPage.handler(
-          { params: { url: 'about:blank', isolatedContext: 'session-a' } },
+          {params: {url: 'about:blank', isolatedContext: 'session-a'}},
           response,
           context,
         );
@@ -288,13 +289,13 @@ describe('pages', () => {
     it('creates separate contexts for different isolatedContext names', async () => {
       await withBrowserContext(async (response, context) => {
         await newPage.handler(
-          { params: { url: 'about:blank', isolatedContext: 'session-a' } },
+          {params: {url: 'about:blank', isolatedContext: 'session-a'}},
           response,
           context,
         );
         const pageA = context.getSelectedPptrPage();
         await newPage.handler(
-          { params: { url: 'about:blank', isolatedContext: 'session-b' } },
+          {params: {url: 'about:blank', isolatedContext: 'session-b'}},
           response,
           context,
         );
@@ -308,13 +309,13 @@ describe('pages', () => {
     it('includes isolatedContext in page listing', async () => {
       await withBrowserContext(async (response, context) => {
         await newPage.handler(
-          { params: { url: 'about:blank', isolatedContext: 'session-a' } },
+          {params: {url: 'about:blank', isolatedContext: 'session-a'}},
           response,
           context,
         );
         const result = await response.handle('new_page', context);
         const pages = (
-          result.structuredContent as { pages: Array<{ isolatedContext?: string }> }
+          result.structuredContent as {pages: Array<{isolatedContext?: string}>}
         ).pages;
         const isolatedPage = pages.find(p => p.isolatedContext === 'session-a');
         assert.ok(isolatedPage);
@@ -326,7 +327,7 @@ describe('pages', () => {
         const page = context.getSelectedPptrPage();
         assert.strictEqual(context.getIsolatedContextName(page), undefined);
         await newPage.handler(
-          { params: { url: 'about:blank' } },
+          {params: {url: 'about:blank'}},
           response,
           context,
         );
@@ -340,14 +341,14 @@ describe('pages', () => {
     it('closes an isolated page without errors', async () => {
       await withBrowserContext(async (response, context) => {
         await newPage.handler(
-          { params: { url: 'about:blank', isolatedContext: 'session-a' } },
+          {params: {url: 'about:blank', isolatedContext: 'session-a'}},
           response,
           context,
         );
         const page = context.getSelectedPptrPage();
         const pageId = context.getPageId(page)!;
         assert.ok(!page.isClosed());
-        await closePage.handler({ params: { pageId } }, response, context);
+        await closePage.handler({params: {pageId}}, response, context);
         assert.ok(page.isClosed());
       });
     });
@@ -368,7 +369,7 @@ describe('pages', () => {
       const isolatedPage = context.getSelectedBrowserPage();
 
       // Switch global selection back to the default page.
-      await selectPage.handler({ params: { pageId: 1 } }, response, context);
+      await selectPage.handler({params: {pageId: 1}}, response, context);
       assert.notStrictEqual(context.getSelectedBrowserPage(), isolatedPage);
 
       // Navigate using page; should target the isolated page.
@@ -406,7 +407,7 @@ describe('pages', () => {
           context.getSelectedBrowserPage(),
         );
         assert.strictEqual(context.getPageById(2), page);
-        await closePage.handler({ params: { pageId: 2 } }, response, context);
+        await closePage.handler({params: {pageId: 2}}, response, context);
         assert.ok(page.pptrPage.isClosed());
         assert.ok(response.includePages);
       });
@@ -414,7 +415,7 @@ describe('pages', () => {
     it('cannot close the last page', async () => {
       await withBrowserContext(async (response, context) => {
         const page = context.getSelectedPptrPage();
-        await closePage.handler({ params: { pageId: 1 } }, response, context);
+        await closePage.handler({params: {pageId: 1}}, response, context);
         assert.deepStrictEqual(
           response.responseLines[0],
           `The last open page cannot be closed. It is fine to keep it open.`,
@@ -432,7 +433,7 @@ describe('pages', () => {
           context.getPageById(2),
           context.getSelectedBrowserPage(),
         );
-        await selectPage.handler({ params: { pageId: 1 } }, response, context);
+        await selectPage.handler({params: {pageId: 1}}, response, context);
         assert.strictEqual(
           context.getPageById(1),
           context.getSelectedBrowserPage(),
@@ -453,7 +454,7 @@ describe('pages', () => {
             .pptrPage.evaluate(() => document.hasFocus()),
           true,
         );
-        await selectPage.handler({ params: { pageId: 1 } }, response, context);
+        await selectPage.handler({params: {pageId: 1}}, response, context);
         assert.strictEqual(
           context.getPageById(1),
           context.getSelectedBrowserPage(),
@@ -471,7 +472,7 @@ describe('pages', () => {
       await withBrowserContext(async (response, context) => {
         // Create pages in separate isolated contexts.
         await newPage.handler(
-          { params: { url: 'about:blank', isolatedContext: 'ctx-a' } },
+          {params: {url: 'about:blank', isolatedContext: 'ctx-a'}},
           response,
           context,
         );
@@ -479,7 +480,7 @@ describe('pages', () => {
         const pageAId = context.getPageId(pageA)!;
 
         await newPage.handler(
-          { params: { url: 'about:blank', isolatedContext: 'ctx-b' } },
+          {params: {url: 'about:blank', isolatedContext: 'ctx-b'}},
           response,
           context,
         );
@@ -497,7 +498,7 @@ describe('pages', () => {
 
         // Switching back to pageA should preserve pageB's focus.
         await selectPage.handler(
-          { params: { pageId: pageAId } },
+          {params: {pageId: pageAId}},
           response,
           context,
         );
@@ -517,7 +518,7 @@ describe('pages', () => {
       await withBrowserContext(async (response, context) => {
         await navigatePage.handler(
           {
-            params: { url: 'data:text/html,<div>Hello MCP</div>' },
+            params: {url: 'data:text/html,<div>Hello MCP</div>'},
             page: context.getSelectedBrowserPage(),
           },
           response,
@@ -546,7 +547,7 @@ describe('pages', () => {
         try {
           await navigatePage.handler(
             {
-              params: { url: 'data:text/html,<div>Hello MCP</div>' },
+              params: {url: 'data:text/html,<div>Hello MCP</div>'},
               page: context.getSelectedBrowserPage(),
             },
             response,
@@ -595,7 +596,7 @@ describe('pages', () => {
         const page = context.getSelectedPptrPage();
         await page.goto('data:text/html,<div>Hello MCP</div>');
         await navigatePage.handler(
-          { params: { type: 'back' }, page: context.getSelectedBrowserPage() },
+          {params: {type: 'back'}, page: context.getSelectedBrowserPage()},
           response,
           context,
         );
@@ -613,7 +614,7 @@ describe('pages', () => {
         await page.goto('data:text/html,<div>Hello MCP</div>');
         await page.goBack();
         await navigatePage.handler(
-          { params: { type: 'forward' }, page: context.getSelectedBrowserPage() },
+          {params: {type: 'forward'}, page: context.getSelectedBrowserPage()},
           response,
           context,
         );
@@ -630,7 +631,7 @@ describe('pages', () => {
         const page = context.getSelectedPptrPage();
         await page.goto('data:text/html,<div>Hello MCP</div>');
         await navigatePage.handler(
-          { params: { type: 'reload' }, page: context.getSelectedBrowserPage() },
+          {params: {type: 'reload'}, page: context.getSelectedBrowserPage()},
           response,
           context,
         );
@@ -656,12 +657,15 @@ describe('pages', () => {
         );
 
         await navigatePage.handler(
-          { params: { type: 'reload' }, page: context.getSelectedBrowserPage() },
+          {params: {type: 'reload'}, page: context.getSelectedBrowserPage()},
           response,
           context,
         );
 
-        assert.strictEqual(context.getSelectedBrowserPage().getDialog(), undefined);
+        assert.strictEqual(
+          context.getSelectedBrowserPage().getDialog(),
+          undefined,
+        );
         assert.ok(response.includePages);
         assert.strictEqual(
           response.responseLines.join('\n'),
@@ -695,7 +699,10 @@ describe('pages', () => {
           context,
         );
 
-        assert.strictEqual(context.getSelectedBrowserPage().getDialog(), undefined);
+        assert.strictEqual(
+          context.getSelectedBrowserPage().getDialog(),
+          undefined,
+        );
         assert.ok(response.includePages);
         assert.strictEqual(
           response.responseLines.join('\n'),
@@ -707,7 +714,7 @@ describe('pages', () => {
     it('go forward with error', async () => {
       await withBrowserContext(async (response, context) => {
         await navigatePage.handler(
-          { params: { type: 'forward' }, page: context.getSelectedBrowserPage() },
+          {params: {type: 'forward'}, page: context.getSelectedBrowserPage()},
           response,
           context,
         );
@@ -723,7 +730,7 @@ describe('pages', () => {
     it('go back with error', async () => {
       await withBrowserContext(async (response, context) => {
         await navigatePage.handler(
-          { params: { type: 'back' }, page: context.getSelectedBrowserPage() },
+          {params: {type: 'back'}, page: context.getSelectedBrowserPage()},
           response,
           context,
         );
@@ -766,12 +773,12 @@ describe('pages', () => {
         const page = context.getSelectedPptrPage();
         const resizePromise = page.evaluate(() => {
           return new Promise(resolve => {
-            window.addEventListener('resize', resolve, { once: true });
+            window.addEventListener('resize', resolve, {once: true});
           });
         });
         await resizePage.handler(
           {
-            params: { width: 700, height: 500 },
+            params: {width: 700, height: 500},
             page: context.getSelectedBrowserPage(),
           },
           response,
@@ -793,19 +800,19 @@ describe('pages', () => {
         const page = context.getSelectedPptrPage();
         const browser = page.browser();
         const windowId = await page.windowId();
-        await browser.setWindowBounds(windowId, { windowState: 'normal' });
+        await browser.setWindowBounds(windowId, {windowState: 'normal'});
 
-        const { windowState } = await browser.getWindowBounds(windowId);
+        const {windowState} = await browser.getWindowBounds(windowId);
         assert.strictEqual(windowState, 'normal');
 
         const resizePromise = page.evaluate(() => {
           return new Promise(resolve => {
-            window.addEventListener('resize', resolve, { once: true });
+            window.addEventListener('resize', resolve, {once: true});
           });
         });
         await resizePage.handler(
           {
-            params: { width: 650, height: 450 },
+            params: {width: 650, height: 450},
             page: context.getSelectedBrowserPage(),
           },
           response,
@@ -827,19 +834,19 @@ describe('pages', () => {
         const page = context.getSelectedPptrPage();
         const browser = page.browser();
         const windowId = await page.windowId();
-        await browser.setWindowBounds(windowId, { windowState: 'minimized' });
+        await browser.setWindowBounds(windowId, {windowState: 'minimized'});
 
-        const { windowState } = await browser.getWindowBounds(windowId);
+        const {windowState} = await browser.getWindowBounds(windowId);
         assert.strictEqual(windowState, 'minimized');
 
         const resizePromise = page.evaluate(() => {
           return new Promise(resolve => {
-            window.addEventListener('resize', resolve, { once: true });
+            window.addEventListener('resize', resolve, {once: true});
           });
         });
         await resizePage.handler(
           {
-            params: { width: 750, height: 550 },
+            params: {width: 750, height: 550},
             page: context.getSelectedBrowserPage(),
           },
           response,
@@ -861,19 +868,19 @@ describe('pages', () => {
         const page = context.getSelectedPptrPage();
         const browser = page.browser();
         const windowId = await page.windowId();
-        await browser.setWindowBounds(windowId, { windowState: 'maximized' });
+        await browser.setWindowBounds(windowId, {windowState: 'maximized'});
 
-        const { windowState } = await browser.getWindowBounds(windowId);
+        const {windowState} = await browser.getWindowBounds(windowId);
         assert.strictEqual(windowState, 'maximized');
 
         const resizePromise = page.evaluate(() => {
           return new Promise(resolve => {
-            window.addEventListener('resize', resolve, { once: true });
+            window.addEventListener('resize', resolve, {once: true});
           });
         });
         await resizePage.handler(
           {
-            params: { width: 725, height: 525 },
+            params: {width: 725, height: 525},
             page: context.getSelectedBrowserPage(),
           },
           response,
@@ -895,19 +902,19 @@ describe('pages', () => {
         const page = context.getSelectedPptrPage();
         const browser = page.browser();
         const windowId = await page.windowId();
-        await browser.setWindowBounds(windowId, { windowState: 'fullscreen' });
+        await browser.setWindowBounds(windowId, {windowState: 'fullscreen'});
 
-        const { windowState } = await browser.getWindowBounds(windowId);
+        const {windowState} = await browser.getWindowBounds(windowId);
         assert.strictEqual(windowState, 'fullscreen');
 
         const resizePromise = page.evaluate(() => {
           return new Promise(resolve => {
-            window.addEventListener('resize', resolve, { once: true });
+            window.addEventListener('resize', resolve, {once: true});
           });
         });
         await resizePage.handler(
           {
-            params: { width: 850, height: 650 },
+            params: {width: 850, height: 650},
             page: context.getSelectedBrowserPage(),
           },
           response,
@@ -948,7 +955,10 @@ describe('pages', () => {
           response,
           context,
         );
-        assert.strictEqual(context.getSelectedBrowserPage().getDialog(), undefined);
+        assert.strictEqual(
+          context.getSelectedBrowserPage().getDialog(),
+          undefined,
+        );
         assert.strictEqual(
           response.responseLines[0],
           'Successfully accepted the dialog',
@@ -977,7 +987,10 @@ describe('pages', () => {
           response,
           context,
         );
-        assert.strictEqual(context.getSelectedBrowserPage().getDialog(), undefined);
+        assert.strictEqual(
+          context.getSelectedBrowserPage().getDialog(),
+          undefined,
+        );
         assert.strictEqual(
           response.responseLines[0],
           'Successfully dismissed the dialog',
@@ -988,7 +1001,7 @@ describe('pages', () => {
       await withBrowserContext(async (response, context) => {
         const page = context.getSelectedPptrPage();
         const dialogPromise = new Promise<Dialog>(resolve => {
-          page.on('dialog', (dialog: any) => {
+          page.on('dialog', (dialog: Dialog) => {
             resolve(dialog);
           });
         });
@@ -1007,7 +1020,10 @@ describe('pages', () => {
           response,
           context,
         );
-        assert.strictEqual(context.getSelectedBrowserPage().getDialog(), undefined);
+        assert.strictEqual(
+          context.getSelectedBrowserPage().getDialog(),
+          undefined,
+        );
         assert.strictEqual(
           response.responseLines[0],
           'Successfully dismissed the dialog',
@@ -1081,7 +1097,7 @@ describe('pages', () => {
 
         // Handle page1's dialog; page2's should remain.
         await handleDialog.handler(
-          { params: { action: 'accept' }, page: page1 },
+          {params: {action: 'accept'}, page: page1},
           response,
           context,
         );
@@ -1090,7 +1106,7 @@ describe('pages', () => {
 
         // Handle page2's dialog.
         await handleDialog.handler(
-          { params: { action: 'dismiss' }, page: page2 },
+          {params: {action: 'dismiss'}, page: page2},
           response,
           context,
         );
@@ -1108,7 +1124,7 @@ describe('pages', () => {
         // @ts-expect-error _tabId is internal.
         page._tabId = 'test-tab-id';
         await getTabId.handler(
-          { params: { pageId: 1 }, page: context.getSelectedBrowserPage() },
+          {params: {pageId: 1}, page: context.getSelectedBrowserPage()},
           response,
           context,
         );

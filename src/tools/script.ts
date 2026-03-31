@@ -4,13 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { zod } from '../third_party/index.js';
-import type { Frame, JSHandle, Page, WebWorker } from '../third_party/index.js';
-import type { ExtensionServiceWorker } from '../types.js';
+import {zod} from '../third_party/index.js';
+import type {Frame, JSHandle, Page, WebWorker} from '../third_party/index.js';
+import type {ExtensionServiceWorker} from '../types.js';
 
-import { ToolCategory } from './categories.js';
-import type { Context, Response } from './ToolDefinition.js';
-import { defineTool, pageIdSchema } from './ToolDefinition.js';
+import {ToolCategory} from './categories.js';
+import type {Context, Response} from './ToolDefinition.js';
+import {defineTool, pageIdSchema} from './ToolDefinition.js';
 
 export type Evaluatable = Page | Frame | WebWorker;
 
@@ -49,13 +49,13 @@ Example with arguments: \`(el) => {
       ...(cliArgs?.experimentalPageIdRouting ? pageIdSchema : {}),
       ...(cliArgs?.categoryExtensions
         ? {
-          serviceWorkerId: zod
-            .string()
-            .optional()
-            .describe(
-              `An optional service worker id to evaluate the script in.`,
-            ),
-        }
+            serviceWorkerId: zod
+              .string()
+              .optional()
+              .describe(
+                `An optional service worker id to evaluate the script in.`,
+              ),
+          }
         : {}),
     },
     handler: async (request, response, context) => {

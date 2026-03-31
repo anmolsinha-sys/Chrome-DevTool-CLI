@@ -59,7 +59,7 @@ Identify other error messages from the failed tool call or the MCP initializatio
 
 ### Step 3: Read Known Issues
 
-Read the contents of https://github.com/ChromeDevTools/chrome-devtools-mcp/blob/main/docs/troubleshooting.md to map the error to a known issue. Pay close attention to:
+Read the contents of https://github.com/anmolsinha-sys/Chrome-DevTool-CLI/blob/main/docs/troubleshooting.md to map the error to a known issue. Pay close attention to:
 
 - Sandboxing restrictions (macOS Seatbelt, Linux containers).
 - WSL requirements.
@@ -85,7 +85,7 @@ If the issue is still unclear, run diagnostic commands to test the server direct
 
 ### Step 6: Check GitHub for Existing Issues
 
-If https://github.com/ChromeDevTools/chrome-devtools-mcp/blob/main/docs/troubleshooting.md does not cover the specific error, check if the `gh` (GitHub CLI) tool is available in the environment. If so, search the GitHub repository for similar issues:
-`gh issue list --repo ChromeDevTools/chrome-devtools-mcp --search "<error snippet>" --state all`
+If https://github.com/anmolsinha-sys/Chrome-DevTool-CLI/blob/main/docs/troubleshooting.md does not cover the specific error, check if the `gh` (GitHub CLI) tool is available in the environment. If so, search the GitHub repository for similar issues:
+`gh issue list --repo anmolsinha-sys/Chrome-DevTool-CLI --search "<error snippet>" --state all`
 
-Alternatively, you can recommend that the user checks https://github.com/ChromeDevTools/chrome-devtools-mcp/issues and https://github.com/ChromeDevTools/chrome-devtools-mcp/discussions for help.
+Alternatively, you can recommend that the user checks https://github.com/anmolsinha-sys/Chrome-DevTool-CLI/issues and https://github.com/anmolsinha-sys/Chrome-DevTool-CLI/discussions for help.

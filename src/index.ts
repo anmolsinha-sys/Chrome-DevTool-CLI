@@ -6,27 +6,27 @@
 
 import type fs from 'node:fs';
 
-import type { parseArguments } from './bin/chrome-devtools-mcp-cli-options.js';
-import type { Channel } from './browser.js';
-import { ensureBrowserConnected, ensureBrowserLaunched } from './browser.js';
-import { loadIssueDescriptions } from './issue-descriptions.js';
-import { logger } from './logger.js';
-import { BrowserContext } from './BrowserContext.js';
-import { BrowserResponse } from './BrowserResponse.js';
-import { Mutex } from './Mutex.js';
-import { SlimBrowserResponse } from './SlimBrowserResponse.js';
-import { ClearcutLogger } from './telemetry/ClearcutLogger.js';
-import { bucketizeLatency } from './telemetry/metricUtils.js';
+import type {parseArguments} from './bin/chrome-devtools-mcp-cli-options.js';
+import type {Channel} from './browser.js';
+import {ensureBrowserConnected, ensureBrowserLaunched} from './browser.js';
+import {BrowserContext} from './BrowserContext.js';
+import {BrowserResponse} from './BrowserResponse.js';
+import {loadIssueDescriptions} from './issue-descriptions.js';
+import {logger} from './logger.js';
+import {Mutex} from './Mutex.js';
+import {SlimBrowserResponse} from './SlimBrowserResponse.js';
+import {ClearcutLogger} from './telemetry/ClearcutLogger.js';
+import {bucketizeLatency} from './telemetry/metricUtils.js';
 import {
   McpServer,
   type CallToolResult,
   SetLevelRequestSchema,
 } from './third_party/index.js';
-import { ToolCategory } from './tools/categories.js';
-import type { DefinedPageTool, ToolDefinition } from './tools/ToolDefinition.js';
-import { pageIdSchema } from './tools/ToolDefinition.js';
-import { createTools } from './tools/tools.js';
-import { VERSION } from './version.js';
+import {ToolCategory} from './tools/categories.js';
+import type {DefinedPageTool, ToolDefinition} from './tools/ToolDefinition.js';
+import {pageIdSchema} from './tools/ToolDefinition.js';
+import {createTools} from './tools/tools.js';
+import {VERSION} from './version.js';
 
 export async function createMcpServer(
   serverArgs: ReturnType<typeof parseArguments>,
@@ -51,7 +51,7 @@ export async function createMcpServer(
       title: 'Chrome DevTools MCP server',
       version: VERSION,
     },
-    { capabilities: { logging: {} } },
+    {capabilities: {logging: {}}},
   );
   server.server.setRequestHandler(SetLevelRequestSchema, () => {
     return {};
@@ -77,31 +77,31 @@ export async function createMcpServer(
     const browser =
       serverArgs.browserUrl || serverArgs.wsEndpoint || serverArgs.autoConnect
         ? await ensureBrowserConnected({
-          browserURL: serverArgs.browserUrl,
-          wsEndpoint: serverArgs.wsEndpoint,
-          wsHeaders: serverArgs.wsHeaders,
-          // Important: only pass channel, if autoConnect is true.
-          channel: serverArgs.autoConnect
-            ? (serverArgs.channel as Channel)
-            : undefined,
-          userDataDir: serverArgs.userDataDir,
-          devtools,
-        })
+            browserURL: serverArgs.browserUrl,
+            wsEndpoint: serverArgs.wsEndpoint,
+            wsHeaders: serverArgs.wsHeaders,
+            // Important: only pass channel, if autoConnect is true.
+            channel: serverArgs.autoConnect
+              ? (serverArgs.channel as Channel)
+              : undefined,
+            userDataDir: serverArgs.userDataDir,
+            devtools,
+          })
         : await ensureBrowserLaunched({
-          headless: serverArgs.headless,
-          executablePath: serverArgs.executablePath,
-          channel: serverArgs.channel as Channel,
-          isolated: serverArgs.isolated ?? false,
-          userDataDir: serverArgs.userDataDir,
-          logFile: options.logFile,
-          viewport: serverArgs.viewport,
-          chromeArgs,
-          ignoreDefaultChromeArgs,
-          acceptInsecureCerts: serverArgs.acceptInsecureCerts,
-          devtools,
-          enableExtensions: serverArgs.categoryExtensions,
-          viaCli: serverArgs.viaCli,
-        });
+            headless: serverArgs.headless,
+            executablePath: serverArgs.executablePath,
+            channel: serverArgs.channel as Channel,
+            isolated: serverArgs.isolated ?? false,
+            userDataDir: serverArgs.userDataDir,
+            logFile: options.logFile,
+            viewport: serverArgs.viewport,
+            chromeArgs,
+            ignoreDefaultChromeArgs,
+            acceptInsecureCerts: serverArgs.acceptInsecureCerts,
+            devtools,
+            enableExtensions: serverArgs.categoryExtensions,
+            viaCli: serverArgs.viaCli,
+          });
 
     if (context?.browser !== browser) {
       context = await BrowserContext.from(browser, logger, {
@@ -166,10 +166,10 @@ export async function createMcpServer(
     }
     const schema =
       'pageScoped' in tool &&
-        tool.pageScoped &&
-        serverArgs.experimentalPageIdRouting &&
-        !serverArgs.slim
-        ? { ...tool.schema, ...pageIdSchema }
+      tool.pageScoped &&
+      serverArgs.experimentalPageIdRouting &&
+      !serverArgs.slim
+        ? {...tool.schema, ...pageIdSchema}
         : tool.schema;
 
     server.registerTool(
@@ -194,8 +194,8 @@ export async function createMcpServer(
           if ('pageScoped' in tool && tool.pageScoped) {
             const page =
               serverArgs.experimentalPageIdRouting &&
-                params.pageId &&
-                !serverArgs.slim
+              params.pageId &&
+              !serverArgs.slim
                 ? context.getPageById(params.pageId)
                 : context.getSelectedBrowserPage();
             response.setPage(page);
@@ -217,7 +217,7 @@ export async function createMcpServer(
               context,
             );
           }
-          const { content, structuredContent } = await response.handle(
+          const {content, structuredContent} = await response.handle(
             tool.name,
             context,
           );
@@ -268,7 +268,7 @@ export async function createMcpServer(
 
   await loadIssueDescriptions();
 
-  return { server, clearcutLogger };
+  return {server, clearcutLogger};
 }
 
 export const logDisclaimers = (args: ReturnType<typeof parseArguments>) => {
@@ -288,7 +288,7 @@ Avoid sharing sensitive or personal information that you do not want to share wi
     console.error(
       `
 Google collects usage statistics to improve Chrome DevTools MCP. To opt-out, run with --no-usage-statistics.
-For more details, visit: https://github.com/ChromeDevTools/chrome-devtools-mcp#usage-statistics`,
+For more details, visit: https://github.com/anmolsinha-sys/Chrome-DevTool-CLI#usage-statistics`,
     );
   }
 };

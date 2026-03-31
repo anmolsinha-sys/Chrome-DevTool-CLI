@@ -6,13 +6,15 @@
 
 import assert from 'node:assert';
 import path from 'node:path';
-import { describe, it } from 'node:test';
+import {describe, it} from 'node:test';
 
-import type { ParsedArguments } from '../../src/bin/chrome-devtools-mcp-cli-options.js';
-import { installExtension } from '../../src/tools/extensions.js';
-import { evaluateScript } from '../../src/tools/script.js';
-import { serverHooks } from '../server.js';
-import { extractExtensionId, html, withBrowserContext } from '../utils.js';
+import type {Target} from 'puppeteer-core';
+
+import type {ParsedArguments} from '../../src/bin/chrome-devtools-mcp-cli-options.js';
+import {installExtension} from '../../src/tools/extensions.js';
+import {evaluateScript} from '../../src/tools/script.js';
+import {serverHooks} from '../server.js';
+import {extractExtensionId, html, withBrowserContext} from '../utils.js';
 
 const EXTENSION_PATH = path.join(
   import.meta.dirname,
@@ -27,7 +29,7 @@ describe('script', () => {
       await withBrowserContext(async (response, context) => {
         await evaluateScript().handler(
           {
-            params: { function: String(() => 2 * 5) },
+            params: {function: String(() => 2 * 5)},
           },
           response,
           context,
@@ -40,7 +42,7 @@ describe('script', () => {
       await withBrowserContext(async (response, context) => {
         await evaluateScript().handler(
           {
-            params: { function: String(() => document.title) },
+            params: {function: String(() => document.title)},
           },
           response,
           context,
@@ -59,7 +61,7 @@ describe('script', () => {
         response.resetResponseLineForTesting();
         await evaluateScript().handler(
           {
-            params: { function: String(() => document.title) },
+            params: {function: String(() => document.title)},
           },
           response,
           context,
@@ -82,9 +84,9 @@ describe('script', () => {
               function: String(() => {
                 const scripts = Array.from(
                   document.head.querySelectorAll('script'),
-                ).map(s => ({ src: s.src, async: s.async, defer: s.defer }));
+                ).map(s => ({src: s.src, async: s.async, defer: s.defer}));
 
-                return { scripts };
+                return {scripts};
               }),
             },
           },
@@ -202,19 +204,22 @@ describe('script', () => {
       await withBrowserContext(
         async (response, context) => {
           await installExtension.handler(
-            { params: { path: EXTENSION_PATH } },
+            {params: {path: EXTENSION_PATH}},
             response,
             context,
           );
 
           const extensionId = extractExtensionId(response);
           const swTarget = await context.browser.waitForTarget(
-            (t: any) => t.type() === 'service_worker' && t.url().includes(extensionId),
+            (t: Target) =>
+              t.type() === 'service_worker' && t.url().includes(extensionId),
           );
 
           await context.createExtensionServiceWorkersSnapshot();
           const swList = context.getExtensionServiceWorkers();
-          const sw = swList.find((s: any) => s.target === swTarget);
+          const sw = swList.find(
+            (s: {target: Target}) => s.target === swTarget,
+          );
 
           if (!sw) {
             assert.fail('Service worker not found in context list');
@@ -242,7 +247,7 @@ describe('script', () => {
           assert.strictEqual(JSON.parse(lineEvaluation), 'has-chrome');
         },
         {},
-        { categoryExtensions: true } as ParsedArguments,
+        {categoryExtensions: true} as ParsedArguments,
       );
     });
 
@@ -269,7 +274,7 @@ describe('script', () => {
           );
         },
         {},
-        { categoryExtensions: true } as ParsedArguments,
+        {categoryExtensions: true} as ParsedArguments,
       );
     });
 
@@ -297,7 +302,7 @@ describe('script', () => {
           );
         },
         {},
-        { categoryExtensions: true } as ParsedArguments,
+        {categoryExtensions: true} as ParsedArguments,
       );
     });
   });

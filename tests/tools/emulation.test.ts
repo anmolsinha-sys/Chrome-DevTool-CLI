@@ -204,7 +204,10 @@ describe('emulation', () => {
           context,
         );
 
-        assert.strictEqual(context.getSelectedBrowserPage().cpuThrottlingRate, 4);
+        assert.strictEqual(
+          context.getSelectedBrowserPage().cpuThrottlingRate,
+          4,
+        );
       });
     });
 
@@ -224,7 +227,10 @@ describe('emulation', () => {
           context,
         );
 
-        assert.strictEqual(context.getSelectedBrowserPage().cpuThrottlingRate, 1);
+        assert.strictEqual(
+          context.getSelectedBrowserPage().cpuThrottlingRate,
+          1,
+        );
       });
     });
 
@@ -241,12 +247,18 @@ describe('emulation', () => {
           context,
         );
 
-        assert.strictEqual(context.getSelectedBrowserPage().cpuThrottlingRate, 4);
+        assert.strictEqual(
+          context.getSelectedBrowserPage().cpuThrottlingRate,
+          4,
+        );
 
         const page = await context.newPage();
         context.selectPage(page);
 
-        assert.strictEqual(context.getSelectedBrowserPage().cpuThrottlingRate, 1);
+        assert.strictEqual(
+          context.getSelectedBrowserPage().cpuThrottlingRate,
+          1,
+        );
       });
     });
   });
@@ -291,7 +303,10 @@ describe('emulation', () => {
           context,
         );
 
-        assert.notStrictEqual(context.getSelectedBrowserPage().geolocation, null);
+        assert.notStrictEqual(
+          context.getSelectedBrowserPage().geolocation,
+          null,
+        );
 
         // Then clear it by setting geolocation to null
         await emulate.handler(
@@ -585,7 +600,10 @@ describe('emulation', () => {
           context,
         );
 
-        assert.strictEqual(context.getSelectedBrowserPage().colorScheme, 'dark');
+        assert.strictEqual(
+          context.getSelectedBrowserPage().colorScheme,
+          'dark',
+        );
         const page = context.getSelectedPptrPage();
         const scheme = await page.evaluate(() =>
           window.matchMedia('(prefers-color-scheme: dark)').matches
@@ -608,7 +626,10 @@ describe('emulation', () => {
           response,
           context,
         );
-        assert.strictEqual(context.getSelectedBrowserPage().colorScheme, 'dark');
+        assert.strictEqual(
+          context.getSelectedBrowserPage().colorScheme,
+          'dark',
+        );
 
         await emulate.handler(
           {
@@ -620,7 +641,10 @@ describe('emulation', () => {
           response,
           context,
         );
-        assert.strictEqual(context.getSelectedBrowserPage().colorScheme, 'light');
+        assert.strictEqual(
+          context.getSelectedBrowserPage().colorScheme,
+          'light',
+        );
         const page = context.getSelectedPptrPage();
         const scheme = await page.evaluate(() =>
           window.matchMedia('(prefers-color-scheme: light)').matches
@@ -649,7 +673,10 @@ describe('emulation', () => {
           response,
           context,
         );
-        assert.strictEqual(context.getSelectedBrowserPage().colorScheme, 'dark');
+        assert.strictEqual(
+          context.getSelectedBrowserPage().colorScheme,
+          'dark',
+        );
         // Check manually that it is dark
 
         assert.strictEqual(

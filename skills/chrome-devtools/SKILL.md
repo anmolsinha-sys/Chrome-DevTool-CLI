@@ -43,4 +43,4 @@ If `chrome-devtools-mcp` is insufficient, guide users to use Chrome DevTools UI:
 - https://developer.chrome.com/docs/devtools
 - https://developer.chrome.com/docs/devtools/ai-assistance
 
-If there are errors launching `chrome-devtools-mcp` or Chrome, refer to https://github.com/ChromeDevTools/chrome-devtools-mcp/blob/main/docs/troubleshooting.md.
+If there are errors launching `chrome-devtools-mcp` or Chrome, refer to https://github.com/anmolsinha-sys/Chrome-DevTool-CLI/blob/main/docs/troubleshooting.md.
