@@ -7,9 +7,9 @@ A standalone CLI and MCP server for Chrome DevTools browser automation.
 Once published, you can use the CLI directly via `npx`:
 
 ```bash
-npx chrome-devtool-cli open --url https://example.com
-npx chrome-devtool-cli screenshot
-npx chrome-devtool-cli ls
+npx @anmolsinha-sys/chrome-devtool-cli open --url https://example.com
+npx @anmolsinha-sys/chrome-devtool-cli screenshot
+npx @anmolsinha-sys/chrome-devtool-cli ls
 ```
 
 > [!NOTE]
