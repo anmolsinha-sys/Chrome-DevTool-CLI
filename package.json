@@ -1,5 +1,5 @@
 {
-  "name": "@anmolsinha-sys/chrome-devtool-cli",
+  "name": "devtool-chrome-cli",
   "version": "0.20.3",
   "description": "Standalone CLI and MCP server for Chrome DevTools browser automation",
   "type": "module",
