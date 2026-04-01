@@ -16,6 +16,30 @@ npx devtool-chrome-cli ls
 > If you are running locally without publishing, use:
 > `node build/src/bin/chrome-devtools.js <command>`
 
+## CLI Tool Reference
+
+The following commands are available via the `devtool-chrome-cli`:
+
+| Command | Description |
+|---------|-------------|
+| `open` | Go to a URL, back, forward, or reload. |
+| `screenshot` | Take a screenshot of the page or an element. |
+| `ls` | List all open pages in the browser. |
+| `tab` | Open a new tab and load a URL. |
+| `print_page` | Saves the current page as a PDF file. |
+| `type` | Type text using keyboard into a focused input. |
+| `press` | Press a key or key combination (e.g., "Enter", "Control+A"). |
+| `fill` | Fill an input, text area, or select an option. |
+| `hover` | Hover over an element. |
+| `evaluate` | Evaluate JavaScript inside the page. |
+| `take_snapshot` | Take a text snapshot (accessibility tree) of the page. |
+| `click` | Click on an element by UID. |
+| `resize_page` | Resize the page window. |
+| `status` | Check if the daemon is running. |
+| `stop` | Stop the daemon. |
+
+Run `npx devtool-chrome-cli <command> --help` for detailed options on each command.
+
 ## Key Features
 
 - **Standalone CLI**: Optimized for shell scripts and terminal usage.
